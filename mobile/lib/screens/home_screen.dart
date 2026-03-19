@@ -461,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(height: 16),
                           Text('Belum ada laporan', style: TextStyle(color: AppTheme.neutral700, fontWeight: FontWeight.w500, fontSize: 16)),
                           SizedBox(height: 8),
-                          Text('Laporan yang Anda buat akan muncul di sini.', style: TextStyle(color: AppTheme.neutral500, fontSize: 13)),
+                          Text('Laporan yang Anda buat akan muncul di sini.', style: TextStyle(color: AppTheme.neutral300, fontSize: 13)),
                         ],
                       ),
                     )
