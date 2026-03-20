@@ -16,6 +16,13 @@ Route::prefix('v1')->group(function () {
   Route::get('/reports', [ReportController::class , 'index']);
   Route::get('/reports/map', [ReportController::class , 'mapReports']);
   Route::get('/reports/{report}', [ReportController::class , 'show']);
+
+  // Serve images with CORS (workaround for php artisan serve)
+  Route::get('/images/{path}', function (string $path) {
+      $file = storage_path('app/public/' . $path);
+      if (!file_exists($file)) abort(404);
+      return response()->file($file);
+  })->where('path', '.*');
 });
 
 // Authenticated routes

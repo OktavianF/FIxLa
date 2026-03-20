@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
@@ -115,9 +116,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       });
 
       for (var photo in _photos) {
+        final bytes = await photo.readAsBytes();
         formData.files.add(MapEntry(
           'photos[]',
-          await MultipartFile.fromFile(photo.path, filename: photo.name),
+          MultipartFile.fromBytes(bytes, filename: photo.name),
         ));
       }
 
@@ -262,6 +264,14 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
+  Future<Widget> _buildImagePreview(XFile file) async {
+    if (kIsWeb) {
+      final bytes = await file.readAsBytes();
+      return Image.memory(bytes, width: 110, height: 110, fit: BoxFit.cover);
+    }
+    return Image.file(File(file.path), width: 110, height: 110, fit: BoxFit.cover);
+  }
+
   Widget _buildPhotoCard() {
     return _buildCard(
       title: 'Foto Bukti *',
@@ -280,7 +290,17 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: Image.file(File(p.path), width: 110, height: 110, fit: BoxFit.cover),
+                        child: FutureBuilder<Widget>(
+                          future: _buildImagePreview(p),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) return snapshot.data!;
+                            return Container(
+                              width: 110, height: 110,
+                              decoration: BoxDecoration(color: AppTheme.neutral300, borderRadius: BorderRadius.circular(20)),
+                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            );
+                          },
+                        ),
                       ),
                       Positioned(
                         top: 6,

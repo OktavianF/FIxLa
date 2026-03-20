@@ -28,7 +28,7 @@ class ReportPhoto extends Model
 
   public function getUrlAttribute(): string
   {
-    return asset('storage/' . $this->photo_path);
+    return url('api/v1/images/' . $this->photo_path);
   }
 
   protected $appends = ['url'];
