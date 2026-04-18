@@ -10,7 +10,7 @@ const LIBRARIES = ['visualization'];
 
 export default function MapView() {
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: 'AIzaSyDttz2AVabNjp4YkwrKs_cIsPzsq4zicFE',
+    googleMapsApiKey: 'AIzaSyBymY0_zkvlwMzHDRID7oSAwnUXB9I9eTA',
     libraries: LIBRARIES,
   });
 

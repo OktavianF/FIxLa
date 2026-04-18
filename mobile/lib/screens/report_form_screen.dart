@@ -128,7 +128,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Laporan berhasil dikirim! 🎉'), backgroundColor: AppTheme.success),
+        const SnackBar(content: Text('Laporan berhasil dikirim!'), backgroundColor: AppTheme.success),
       );
       context.pop(true);
     } catch (e) {

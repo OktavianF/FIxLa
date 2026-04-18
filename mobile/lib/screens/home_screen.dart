@@ -259,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Text('Laporan Terbaru', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.5, color: AppTheme.neutral900)),
                   GestureDetector(
                     onTap: () => setState(() => _currentIndex = 3),
-                    child: const Text('Lihat Semua', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 14)),
+                    child: const Text('Laporan Saya', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 14)),
                   ),
                 ],
               ),
