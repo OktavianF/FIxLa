@@ -45,28 +45,10 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.construction_rounded, size: 80, color: Colors.white)
+              Image.asset('assets/logo-light.png', width: 220, fit: BoxFit.contain)
                   .animate()
                   .fadeIn(duration: 600.ms)
                   .scale(begin: const Offset(0.5, 0.5)),
-              const SizedBox(height: 16),
-              const Text(
-                'FixLA',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  letterSpacing: 2,
-                ),
-              ).animate().fadeIn(delay: 300.ms, duration: 600.ms),
-              const SizedBox(height: 8),
-              Text(
-                'Lapor Jalan Lamongan',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ).animate().fadeIn(delay: 600.ms, duration: 600.ms),
               const SizedBox(height: 48),
               const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                   .animate()

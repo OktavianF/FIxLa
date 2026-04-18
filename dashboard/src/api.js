@@ -46,6 +46,7 @@ export const getReports = (params) => api.get('/reports', { params });
 export const getReport = (id) => api.get(`/reports/${id}`);
 export const getMapReports = (bounds) => api.get('/reports/map', { params: { bounds } });
 export const updateReportStatus = (id, data) => api.patch(`/admin/reports/${id}/status`, data);
+export const deleteReport = (id) => api.delete(`/admin/reports/${id}`);
 
 // Cost Estimation
 export const estimateCost = (data) => api.post('/admin/cost-estimation', data);

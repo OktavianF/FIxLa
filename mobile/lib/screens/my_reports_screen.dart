@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -117,6 +118,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   }
 
   Widget _buildReportCard(Map<String, dynamic> report) {
+    final photos = report['photos'] as List<dynamic>?;
+    final hasPhoto = photos != null && photos.isNotEmpty;
+    final photoUrl = hasPhoto ? photos[0]['url']?.toString() : null;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -134,14 +139,36 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           ),
           child: Row(
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: AppTheme.getDamageColor(report['damage_level'] ?? '').withValues(alpha: 0.1),
-                ),
-                child: Icon(Icons.report_problem_rounded, color: AppTheme.getDamageColor(report['damage_level'] ?? ''), size: 32),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: photoUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: photoUrl,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(
+                          width: 64, height: 64,
+                          color: AppTheme.neutral300.withValues(alpha: 0.3),
+                          child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                        ),
+                        errorWidget: (_, __, ___) => Container(
+                          width: 64, height: 64,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            color: AppTheme.getDamageColor(report['damage_level'] ?? '').withValues(alpha: 0.1),
+                          ),
+                          child: Icon(Icons.warning_amber_rounded, color: AppTheme.getDamageColor(report['damage_level'] ?? ''), size: 32),
+                        ),
+                      )
+                    : Container(
+                        width: 64, height: 64,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          color: AppTheme.getDamageColor(report['damage_level'] ?? '').withValues(alpha: 0.1),
+                        ),
+                        child: Icon(Icons.warning_amber_rounded, color: AppTheme.getDamageColor(report['damage_level'] ?? ''), size: 32),
+                      ),
               ),
               const SizedBox(width: 16),
               Expanded(

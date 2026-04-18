@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Form, InputNumber, Select, Button, Spin, message } from 'antd';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MdCalculate } from 'react-icons/md';
 import { estimateCost } from '../api';
 
@@ -22,21 +23,30 @@ export default function CostEstimation() {
   return (
     <div>
       <div className="page-header">
-        <h1>Estimasi Biaya Perbaikan</h1>
+        <div>
+          <h1 style={{ marginBottom: 6 }}>Estimasi Biaya Perbaikan</h1>
+          <p style={{ fontSize: 15, color: '#94A3B8', fontWeight: 500 }}>Hitung perkiraan biaya berdasarkan dimensi dan jenis kerusakan.</p>
+        </div>
       </div>
 
-      <div className="chart-card" style={{ marginBottom: 24 }}>
+      <motion.div 
+        className="chart-card" 
+        style={{ marginBottom: 28 }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <h3>Input Data</h3>
-        <Form layout="inline" onFinish={onFinish} style={{ flexWrap: 'wrap', gap: 12 }}>
+        <Form layout="inline" onFinish={onFinish} style={{ flexWrap: 'wrap', gap: 14 }}>
           <Form.Item name="road_length" label="Panjang (m)" rules={[{ required: true }]}>
-            <InputNumber min={1} max={10000} placeholder="0" style={{ width: 120 }} />
+            <InputNumber min={1} max={10000} placeholder="0" style={{ width: 130 }} />
           </Form.Item>
           <Form.Item name="road_width" label="Lebar (m)" rules={[{ required: true }]}>
-            <InputNumber min={1} max={100} placeholder="0" style={{ width: 120 }} />
+            <InputNumber min={1} max={100} placeholder="0" style={{ width: 130 }} />
           </Form.Item>
           <Form.Item name="damage_type" label="Jenis Kerusakan" rules={[{ required: true }]}>
             <Select
-              style={{ width: 160 }}
+              style={{ width: 170 }}
               options={[
                 { value: 'retak', label: 'Retak' },
                 { value: 'berlubang', label: 'Berlubang' },
@@ -45,120 +55,178 @@ export default function CostEstimation() {
             />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} icon={<MdCalculate />}>
+            <Button type="primary" htmlType="submit" loading={loading} icon={<MdCalculate />} style={{ height: 40, borderRadius: 14, fontWeight: 700 }}>
               Hitung Estimasi
             </Button>
           </Form.Item>
         </Form>
-      </div>
+      </motion.div>
 
       {loading && <Spin size="large" style={{ display: 'block', margin: '40px auto' }} />}
 
-      {result && (
-        <>
-          <div className="cost-comparison">
-            {/* Aspal Card */}
-            <div className="cost-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 8, background: '#E8F4F8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                  🛣️
+      <AnimatePresence>
+        {result && (
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="cost-comparison">
+              {/* Aspal Card */}
+              <motion.div 
+                className="cost-card"
+                whileHover={{ y: -6, scale: 1.01 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #E0F2FE, #BAE6FD)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                    🛣️
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 18 }}>ASPAL</h3>
+                    <p style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, margin: 0 }}>Flexible Pavement</p>
+                  </div>
                 </div>
-                <h3 style={{ margin: 0 }}>ASPAL</h3>
-              </div>
-              <div className="price">{result.aspal.formatted_cost}</div>
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#6C757D' }}>
-                <div><strong>Durabilitas:</strong> {result.aspal.durability}</div>
-                <div><strong>Waktu Perbaikan:</strong> {result.aspal.repair_time}</div>
-                <div style={{ marginTop: 8 }}>
-                  <strong>Kelebihan:</strong>
-                  <ul style={{ paddingLeft: 16, margin: '4px 0' }}>
-                    {result.aspal.pros.map((p, i) => <li key={i}>{p}</li>)}
-                  </ul>
+                <div className="price">{result.aspal.formatted_cost}</div>
+                <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14, color: '#475569' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#F8FAFC', borderRadius: 12 }}>
+                    <span style={{ fontWeight: 600, color: '#94A3B8' }}>Durabilitas</span>
+                    <span style={{ fontWeight: 700 }}>{result.aspal.durability}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#F8FAFC', borderRadius: 12 }}>
+                    <span style={{ fontWeight: 600, color: '#94A3B8' }}>Waktu Perbaikan</span>
+                    <span style={{ fontWeight: 700 }}>{result.aspal.repair_time}</span>
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <p style={{ fontWeight: 700, fontSize: 12, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Kelebihan</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {result.aspal.pros.map((p, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                          <span style={{ color: '#10B981', fontSize: 14 }}>✓</span>
+                          {p}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
+
+              {/* Beton Card */}
+              <motion.div 
+                className="cost-card"
+                whileHover={{ y: -6, scale: 1.01 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                    🏗️
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 18 }}>BETON / COR</h3>
+                    <p style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, margin: 0 }}>Rigid Pavement</p>
+                  </div>
+                </div>
+                <div className="price">{result.beton.formatted_cost}</div>
+                <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14, color: '#475569' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#F8FAFC', borderRadius: 12 }}>
+                    <span style={{ fontWeight: 600, color: '#94A3B8' }}>Durabilitas</span>
+                    <span style={{ fontWeight: 700 }}>{result.beton.durability}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#F8FAFC', borderRadius: 12 }}>
+                    <span style={{ fontWeight: 600, color: '#94A3B8' }}>Waktu Perbaikan</span>
+                    <span style={{ fontWeight: 700 }}>{result.beton.repair_time}</span>
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <p style={{ fontWeight: 700, fontSize: 12, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Kelebihan</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {result.beton.pros.map((p, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                          <span style={{ color: '#10B981', fontSize: 14 }}>✓</span>
+                          {p}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
 
-            {/* Beton Card */}
-            <div className="cost-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 8, background: '#FEF3E2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                  🏗️
-                </div>
-                <h3 style={{ margin: 0 }}>BETON / COR</h3>
-              </div>
-              <div className="price">{result.beton.formatted_cost}</div>
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#6C757D' }}>
-                <div><strong>Durabilitas:</strong> {result.beton.durability}</div>
-                <div><strong>Waktu Perbaikan:</strong> {result.beton.repair_time}</div>
-                <div style={{ marginTop: 8 }}>
-                  <strong>Kelebihan:</strong>
-                  <ul style={{ paddingLeft: 16, margin: '4px 0' }}>
-                    {result.beton.pros.map((p, i) => <li key={i}>{p}</li>)}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Cost Breakdown Table */}
-          <div className="chart-grid">
-            <div className="chart-card">
-              <h3>Breakdown Biaya — Aspal</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #f0f0f0' }}>
-                    <th style={th}>Material</th>
-                    <th style={th}>Volume</th>
-                    <th style={th}>Harga Satuan</th>
-                    <th style={th}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.aspal.breakdown.map((b, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #f5f5f5' }}>
-                      <td style={td}>{b.material}</td>
-                      <td style={td}>{b.volume}</td>
-                      <td style={td}>{b.unit_price}</td>
-                      <td style={td}><strong>{b.total}</strong></td>
+            {/* Cost Breakdown Table */}
+            <div className="chart-grid">
+              <motion.div 
+                className="chart-card"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h3>Breakdown Biaya — Aspal</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Material</th>
+                      <th style={thStyle}>Volume</th>
+                      <th style={thStyle}>Harga Satuan</th>
+                      <th style={thStyle}>Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {result.aspal.breakdown.map((b, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={tdStyle}>{b.material}</td>
+                        <td style={tdStyle}>{b.volume}</td>
+                        <td style={tdStyle}>{b.unit_price}</td>
+                        <td style={{ ...tdStyle, fontWeight: 700, color: '#6366F1' }}>{b.total}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </motion.div>
 
-            <div className="chart-card">
-              <h3>Breakdown Biaya — Beton/Cor</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #f0f0f0' }}>
-                    <th style={th}>Material</th>
-                    <th style={th}>Volume</th>
-                    <th style={th}>Harga Satuan</th>
-                    <th style={th}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.beton.breakdown.map((b, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #f5f5f5' }}>
-                      <td style={td}>{b.material}</td>
-                      <td style={td}>{b.volume}</td>
-                      <td style={td}>{b.unit_price}</td>
-                      <td style={td}><strong>{b.total}</strong></td>
+              <motion.div 
+                className="chart-card"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <h3>Breakdown Biaya — Beton/Cor</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Material</th>
+                      <th style={thStyle}>Volume</th>
+                      <th style={thStyle}>Harga Satuan</th>
+                      <th style={thStyle}>Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {result.beton.breakdown.map((b, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={tdStyle}>{b.material}</td>
+                        <td style={tdStyle}>{b.volume}</td>
+                        <td style={tdStyle}>{b.unit_price}</td>
+                        <td style={{ ...tdStyle, fontWeight: 700, color: '#6366F1' }}>{b.total}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </motion.div>
             </div>
-          </div>
 
-          <div style={{ textAlign: 'center', marginTop: 8, color: '#999', fontSize: 12 }}>
-            Luas area: {result.input.area} m² | Jenis kerusakan: {result.input.damage_type}
-          </div>
-        </>
-      )}
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              style={{ textAlign: 'center', marginTop: 12, color: '#94A3B8', fontSize: 13, fontWeight: 500 }}
+            >
+              Luas area: {result.input.area} m² • Jenis kerusakan: {result.input.damage_type}
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-const th = { textAlign: 'left', padding: '8px 12px', fontSize: 13, color: '#6C757D', fontWeight: 600 };
-const td = { padding: '8px 12px', fontSize: 13 };
+const thStyle = { textAlign: 'left', padding: '12px 16px', fontSize: 12, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #F1F5F9' };
+const tdStyle = { padding: '12px 16px', fontSize: 14 };

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // New Elegant Color Palette (Indigo & Rose)
-  static const Color primary = Color(0xFF4F46E5); // Deep Indigo
-  static const Color primaryDark = Color(0xFF312E81); // Midnight Indigo
-  static const Color accent = Color(0xFFE11D48); // Vibrant Rose
-  static const Color danger = Color(0xFFE11D48); // Rose matches danger
+  // Premium Color Palette (Indigo & Rose)
+  static const Color primary = Color(0xFF6366F1); // Indigo
+  static const Color primaryDark = Color(0xFF4338CA); // Dark Indigo
+  static const Color primaryLight = Color(0xFFA5B4FC); // Light Indigo
+  static const Color accent = Color(0xFFF43F5E); // Rose
+  static const Color danger = Color(0xFFEF4444); // Red
   static const Color warning = Color(0xFFF59E0B); // Amber
   static const Color success = Color(0xFF10B981); // Emerald
   static const Color neutral100 = Color(0xFFF8FAFC); // Slate 50
@@ -16,7 +17,7 @@ class AppTheme {
 
   // Status colors
   static const Color statusSubmitted = Color(0xFF64748B); // Slate 500
-  static const Color statusVerified = Color(0xFF4F46E5); // Indigo
+  static const Color statusVerified = Color(0xFF6366F1); // Indigo
   static const Color statusScheduled = Color(0xFFF59E0B); // Amber
   static const Color statusUnderRepair = Color(0xFF8B5CF6); // Violet
   static const Color statusCompleted = Color(0xFF10B981); // Emerald
@@ -24,7 +25,7 @@ class AppTheme {
   // Damage colors
   static const Color damageRingan = Color(0xFF10B981); // Emerald
   static const Color damageSedang = Color(0xFFF59E0B); // Amber
-  static const Color damageBerat = Color(0xFFE11D48); // Rose
+  static const Color damageBerat = Color(0xFFEF4444); // Red
 
   static Color getStatusColor(String status) {
     switch (status) {
@@ -69,7 +70,7 @@ class AppTheme {
   }
 
   static ThemeData get lightTheme {
-    final baseTextTheme = GoogleFonts.outfitTextTheme();
+    final baseTextTheme = GoogleFonts.interTextTheme();
     return ThemeData(
       useMaterial3: true,
       colorSchemeSeed: primary,
@@ -82,7 +83,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: neutral900),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: GoogleFonts.inter(
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: neutral900,
@@ -96,7 +97,7 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          textStyle: GoogleFonts.outfit(
+          textStyle: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,

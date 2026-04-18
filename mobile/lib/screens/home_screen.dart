@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
@@ -19,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userName = '';
   List<dynamic> _recentReports = [];
   List<dynamic> _myReports = [];
+  List<dynamic> _mapReports = [];
   bool _loading = true;
   bool _myLoading = true;
 
@@ -28,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUser();
     _loadReports();
     _loadMyReports();
+    _loadMapReports();
   }
 
   Future<void> _loadUser() async {
@@ -62,6 +65,25 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } catch (e) {
       setState(() => _myLoading = false);
+    }
+  }
+
+  Future<void> _loadMapReports() async {
+    try {
+      final api = ApiService();
+      final res = await api.getMapReports();
+      setState(() {
+        _mapReports = res.data['data'] ?? [];
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _navigateToCreateReport() async {
+    final result = await context.push('/report/create');
+    if (result == true) {
+      _loadReports();
+      _loadMyReports();
+      _loadMapReports();
     }
   }
 
@@ -101,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _navItem(Icons.home_filled, Icons.home_outlined, 'Beranda', 0),
               _navItem(Icons.map_rounded, Icons.map_outlined, 'Peta', 1),
               GestureDetector(
-                onTap: () => context.push('/report/create'),
+                onTap: _navigateToCreateReport,
                 child: Container(
                   height: 56,
                   width: 56,
@@ -145,7 +167,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHomeTab() {
     return RefreshIndicator(
-      onRefresh: _loadReports,
+      onRefresh: () async {
+        await Future.wait([_loadReports(), _loadMyReports(), _loadMapReports()]);
+      },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 120),
@@ -168,13 +192,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Halo, $_userName 👋', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
-                          const SizedBox(height: 4),
-                          Text('Yuk, laporkan jalan rusak di kotamu.', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 15)),
-                        ],
+                      Expanded(
+                        child: Row(
+                          children: [
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Halo, $_userName 👋', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+                                  const SizedBox(height: 2),
+                                  Text('Yuk, laporkan jalan rusak di kotamu.', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       GlassContainer(
                         blur: 20, opacity: 0.15, borderRadius: BorderRadius.circular(16), 
@@ -198,11 +231,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               const Text('Lapor jalan rusak dalam\nkurang dari 1 menit!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18, height: 1.3)),
                               const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                                child: GestureDetector(
-                                  onTap: () => context.push('/report/create'),
+                              GestureDetector(
+                                onTap: _navigateToCreateReport,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
                                   child: const Text('Buat Laporan Sekarang', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w800)),
                                 ),
                               ),
@@ -259,6 +292,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _reportCard(Map<String, dynamic> report) {
+    final photos = report['photos'] as List<dynamic>?;
+    final hasPhoto = photos != null && photos.isNotEmpty;
+    final photoUrl = hasPhoto ? photos[0]['url']?.toString() : null;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -276,14 +313,22 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Row(
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: AppTheme.getDamageColor(report['damage_level'] ?? '').withValues(alpha: 0.1),
-                ),
-                child: Icon(Icons.report_problem_rounded, color: AppTheme.getDamageColor(report['damage_level'] ?? ''), size: 32),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: photoUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: photoUrl,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(
+                          width: 64, height: 64,
+                          color: AppTheme.neutral300.withValues(alpha: 0.3),
+                          child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                        ),
+                        errorWidget: (_, __, ___) => _damageIconBox(report),
+                      )
+                    : _damageIconBox(report),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -336,6 +381,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Fallback damage icon when no photo is available
+  Widget _damageIconBox(Map<String, dynamic> report) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.getDamageColor(report['damage_level'] ?? '').withValues(alpha: 0.1),
+      ),
+      child: Icon(
+        Icons.warning_amber_rounded,
+        color: AppTheme.getDamageColor(report['damage_level'] ?? ''),
+        size: 32,
+      ),
+    );
+  }
+
   Widget _buildMapTab() {
     return Stack(
       children: [
@@ -351,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
           myLocationButtonEnabled: false,
           compassEnabled: false,
           mapToolbarEnabled: false,
-          markers: _recentReports.map((r) {
+          markers: _mapReports.map((r) {
             final lat = double.tryParse(r['latitude'].toString()) ?? 0.0;
             final lng = double.tryParse(r['longitude'].toString()) ?? 0.0;
             return Marker(
@@ -390,6 +452,31 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
+        // Legend
+        Positioned(
+          top: 128,
+          right: 24,
+          child: GlassContainer(
+            borderRadius: BorderRadius.circular(16),
+            padding: const EdgeInsets.all(12),
+            color: Colors.white,
+            opacity: 0.9,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Tingkat Kerusakan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.neutral900)),
+                const SizedBox(height: 8),
+                _legendItem(Colors.red, 'Berat'),
+                const SizedBox(height: 4),
+                _legendItem(Colors.orange, 'Sedang'),
+                const SizedBox(height: 4),
+                _legendItem(Colors.amber, 'Ringan'),
+              ],
+            ),
+          ),
+        ),
+
         // Floating Bottom Map Detail Sheet
         Positioned(
           bottom: 150,
@@ -412,7 +499,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${_recentReports.length} Laporan Ditemukan', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.neutral900, letterSpacing: -0.5)),
+                      Text('${_mapReports.length} Laporan Ditemukan', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.neutral900, letterSpacing: -0.5)),
                       const SizedBox(height: 4),
                       const Text('Jelajahi kerusakan di sekitarmu', style: TextStyle(color: AppTheme.neutral700, fontSize: 13)),
                     ],
@@ -422,6 +509,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _legendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.neutral700, fontWeight: FontWeight.w600)),
       ],
     );
   }

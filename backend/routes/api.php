@@ -50,6 +50,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
       Route::get('/dashboard/heatmap', [DashboardController::class , 'heatmapData']);
       Route::get('/dashboard/monthly-trend', [DashboardController::class , 'monthlyTrend']);
       Route::patch('/reports/{report}/status', [ReportController::class , 'updateStatus']);
+      Route::delete('/reports/{report}', [ReportController::class , 'destroy']);
       Route::post('/cost-estimation', [CostEstimationController::class , 'estimate']);
     }
     );

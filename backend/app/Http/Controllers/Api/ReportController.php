@@ -242,4 +242,26 @@ class ReportController extends Controller
             'type'      => 'status_update',
         ]);
     }
+
+    /**
+     * Delete a report and all related data (admin only).
+     */
+    public function destroy(Report $report): JsonResponse
+    {
+        // Delete photo files from storage
+        foreach ($report->photos as $photo) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($photo->photo_path);
+        }
+
+        // Delete related records (photos, status histories, notifications)
+        $report->photos()->delete();
+        $report->statusHistories()->delete();
+        $report->notifications()->delete();
+        $report->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Laporan berhasil dihapus',
+        ]);
+    }
 }

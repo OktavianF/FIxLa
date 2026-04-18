@@ -61,10 +61,8 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const Icon(Icons.construction_rounded, size: 64, color: Colors.white),
-                  const SizedBox(height: 8),
-                  const Text('FixLA', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white)),
-                  const SizedBox(height: 4),
+                  Image.asset('assets/logo-light.png', width: 200, height: 200, fit: BoxFit.contain),
+                  const SizedBox(height: 1),
                   Text('Masuk ke akun Anda', style: TextStyle(color: Colors.white.withValues(alpha: 0.7))),
                   const SizedBox(height: 32),
                   Card(
