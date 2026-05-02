@@ -29,7 +29,7 @@ api.interceptors.response.use(
 );
 
 // Auth
-export const login = (data) => api.post('/login', data);
+export const login = (email, password) => api.post('/login', { email, password });
 export const logout = () => api.post('/logout');
 export const getMe = () => api.get('/me');
 
@@ -40,6 +40,7 @@ export const getDamageDistribution = () => api.get('/admin/dashboard/damage-dist
 export const getPriorityRanking = (limit = 10) => api.get(`/admin/dashboard/priority-ranking?limit=${limit}`);
 export const getHeatmapData = () => api.get('/admin/dashboard/heatmap');
 export const getMonthlyTrend = () => api.get('/admin/dashboard/monthly-trend');
+export const getCostSummary = () => api.get('/admin/dashboard/cost-summary');
 
 // Reports
 export const getReports = (params) => api.get('/reports', { params });

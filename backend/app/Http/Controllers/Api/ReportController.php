@@ -79,13 +79,16 @@ class ReportController extends Controller
             'district'     => $validated['district'] ?? null,
             'damage_level' => $validated['damage_level'],
             'description'  => $validated['description'] ?? null,
-            'road_length'  => $validated['road_length'] ?? null,
-            'road_width'   => $validated['road_width'] ?? null,
+            'road_length' => $validated['road_length'],
+            'road_width'   => $validated['road_width'],
+            'confidence_score' => $validated['confidence_score'] ?? null,
+            'is_ai_classified' => $validated['is_ai_classified'] ?? false,
             'report_count' => $nearbyCount + 1,
             'status'       => 'submitted',
         ]);
 
         $report->priority_score = $report->calculatePriorityScore();
+        $report->calculateCostEstimation();
         $report->save();
 
         $this->uploadPhotos($request, $report);

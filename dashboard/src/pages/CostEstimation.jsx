@@ -1,12 +1,18 @@
 import { useState } from 'react';
-import { Form, InputNumber, Select, Button, Spin, message } from 'antd';
+import { useQuery } from '@tanstack/react-query';
+import { Form, InputNumber, Select, Button, Spin, message, Table, Tag, Statistic, Row, Col } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MdCalculate } from 'react-icons/md';
-import { estimateCost } from '../api';
+import { MdCalculate, MdAutoAwesome } from 'react-icons/md';
+import { estimateCost, getCostSummary } from '../api';
 
 export default function CostEstimation() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const { data: summary, isLoading: loadingSummary } = useQuery({
+    queryKey: ['cost-summary'],
+    queryFn: () => getCostSummary().then(res => res.data.data),
+  });
 
   const onFinish = async (values) => {
     setLoading(true);
@@ -25,10 +31,73 @@ export default function CostEstimation() {
       <div className="page-header">
         <div>
           <h1 style={{ marginBottom: 6 }}>Estimasi Biaya Perbaikan</h1>
-          <p style={{ fontSize: 15, color: '#94A3B8', fontWeight: 500 }}>Hitung perkiraan biaya berdasarkan dimensi dan jenis kerusakan.</p>
+          <p style={{ fontSize: 15, color: '#94A3B8', fontWeight: 500 }}>Sistem otomatis menghitung estimasi biaya berdasarkan data laporan masuk.</p>
         </div>
       </div>
 
+      <div style={{ marginBottom: 32 }}>
+        <Row gutter={20}>
+          <Col span={8}>
+            <div className="chart-card" style={{ background: 'linear-gradient(135deg, #6366F1, #4F46E5)', color: '#fff' }}>
+              <Statistic 
+                title={<span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Total Estimasi (Aspal)</span>}
+                value={summary?.total_asphalt || 0}
+                precision={0}
+                prefix="Rp"
+                valueStyle={{ color: '#fff', fontWeight: 900, fontSize: 24 }}
+              />
+            </div>
+          </Col>
+          <Col span={8}>
+            <div className="chart-card" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#fff' }}>
+              <Statistic 
+                title={<span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Total Estimasi (Beton)</span>}
+                value={summary?.total_concrete || 0}
+                precision={0}
+                prefix="Rp"
+                valueStyle={{ color: '#fff', fontWeight: 900, fontSize: 24 }}
+              />
+            </div>
+          </Col>
+          <Col span={8}>
+            <div className="chart-card" style={{ background: '#fff' }}>
+              <Statistic 
+                title="Jumlah Laporan Terhitung"
+                value={summary?.count || 0}
+                prefix={<MdAutoAwesome style={{ color: '#6366F1' }} />}
+                valueStyle={{ color: '#0F172A', fontWeight: 900 }}
+              />
+            </div>
+          </Col>
+        </Row>
+      </div>
+
+      <motion.div 
+        className="chart-card" 
+        style={{ marginBottom: 32, padding: 4 }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h3 style={{ padding: '16px 20px 8px' }}>Rangkuman Biaya Per Laporan</h3>
+        <Table 
+          dataSource={summary?.reports || []}
+          loading={loadingSummary}
+          rowKey="id"
+          pagination={{ pageSize: 5 }}
+          size="middle"
+          columns={[
+            { title: 'Alamat', dataIndex: 'address', ellipsis: true },
+            { title: 'Dimensi', render: (_, r) => `${r.road_length}m × ${r.road_width}m` },
+            { title: 'Kerusakan', dataIndex: 'damage_level', render: (v) => <Tag color={v === 'berat' ? 'red' : v === 'sedang' ? 'orange' : 'green'}>{v.toUpperCase()}</Tag> },
+            { title: 'Estimasi Aspal', dataIndex: 'estimated_cost_asphalt', render: (v) => <strong style={{ color: '#6366F1' }}>Rp {new Intl.NumberFormat('id-ID').format(v)}</strong> },
+            { title: 'Estimasi Beton', dataIndex: 'estimated_cost_concrete', render: (v) => <strong style={{ color: '#D97706' }}>Rp {new Intl.NumberFormat('id-ID').format(v)}</strong> },
+          ]}
+        />
+      </motion.div>
+
+      <div style={{ height: 1, background: '#F1F5F9', marginBottom: 32 }} />
+
+      <h3>Kalkulator Estimasi Manual</h3>
       <motion.div 
         className="chart-card" 
         style={{ marginBottom: 28 }}

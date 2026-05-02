@@ -11,7 +11,9 @@ class AppTheme {
   static const Color warning = Color(0xFFF59E0B); // Amber
   static const Color success = Color(0xFF10B981); // Emerald
   static const Color neutral100 = Color(0xFFF8FAFC); // Slate 50
+  static const Color neutral200 = Color(0xFFE2E8F0); // Slate 200
   static const Color neutral300 = Color(0xFFCBD5E1); // Slate 300
+  static const Color neutral600 = Color(0xFF475569); // Slate 600
   static const Color neutral700 = Color(0xFF334155); // Slate 700
   static const Color neutral900 = Color(0xFF0F172A); // Slate 900
 

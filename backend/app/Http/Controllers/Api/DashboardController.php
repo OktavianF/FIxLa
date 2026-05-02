@@ -27,6 +27,8 @@ class DashboardController extends Controller
                 ->whereYear('completed_at', now()->year)
                 ->count(),
             'avg_response_days'    => round($avgResponseDays ?? 0, 1),
+            'total_estimated_cost' => Report::sum('estimated_cost_asphalt'),
+            'ai_reports_count'     => Report::where('is_ai_classified', true)->count(),
         ];
 
         return response()->json([
@@ -119,6 +121,33 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $data,
+        ]);
+    }
+
+    /**
+     * Get summary of repair costs from reports.
+     */
+    public function costSummary(): JsonResponse
+    {
+        $reports = Report::whereNotNull('estimated_cost_asphalt')
+            ->where('status', '!=', 'completed')
+            ->select([
+                'id', 'address', 'district', 'damage_level',
+                'road_length', 'road_width',
+                'estimated_cost_asphalt', 'estimated_cost_concrete',
+                'confidence_score', 'is_ai_classified'
+            ])
+            ->orderByDesc('estimated_cost_asphalt')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'reports' => $reports,
+                'total_asphalt' => $reports->sum('estimated_cost_asphalt'),
+                'total_concrete' => $reports->sum('estimated_cost_concrete'),
+                'count' => $reports->count(),
+            ],
         ]);
     }
 }

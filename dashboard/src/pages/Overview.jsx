@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Spin } from 'antd';
 import { motion } from 'framer-motion';
-import { MdAssignment, MdBuild, MdCheckCircle } from 'react-icons/md';
+import { MdAssignment, MdBuild, MdCheckCircle, MdMonetizationOn, MdPsychology } from 'react-icons/md';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -60,6 +60,8 @@ export default function Overview() {
 
   const stats = [
     { icon: <MdAssignment />, label: 'Total Laporan', value: overview?.total_reports || 0, color: '#6366F1', bg: 'rgba(99, 102, 241, 0.1)', gradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(129, 140, 248, 0.04))' },
+    { icon: <MdMonetizationOn />, label: 'Est. Biaya Total', value: `Rp ${(overview?.total_estimated_cost / 1_000_000 || 0).toFixed(1)}jt`, color: '#6366F1', bg: 'rgba(99, 102, 241, 0.1)', gradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(129, 140, 248, 0.04))' },
+    { icon: <MdPsychology />, label: 'Diklasifikasi AI', value: overview?.ai_reports_count || 0, color: '#06B6D4', bg: 'rgba(6, 182, 212, 0.1)', gradient: 'linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(34, 211, 238, 0.04))' },
     { icon: <MdBuild />, label: 'Dalam Proses', value: overview?.in_progress || 0, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', gradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(251, 191, 36, 0.04))' },
     { icon: <MdCheckCircle />, label: 'Selesai Bulan Ini', value: overview?.completed_this_month || 0, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)', gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(52, 211, 153, 0.04))' },
   ];
@@ -75,7 +77,7 @@ export default function Overview() {
         </div>
       </div>
 
-      <div className="stat-cards">
+      <div className="stat-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 20 }}>
         {stats.map((s, i) => (
           <motion.div 
             className="stat-card" 

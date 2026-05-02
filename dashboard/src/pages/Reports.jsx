@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table, Tag, Select, Modal, Input, Button, message, Image, Popconfirm } from 'antd';
 import { motion } from 'framer-motion';
-import { MdVisibility, MdDeleteOutline, MdFilterList } from 'react-icons/md';
+import { MdVisibility, MdDeleteOutline, MdFilterList, MdPsychology, MdStraighten } from 'react-icons/md';
 import { getReports, updateReportStatus, deleteReport } from '../api';
 
 const STATUS_OPTIONS = [
@@ -66,6 +66,16 @@ export default function Reports() {
           </div>
         ) : <div style={{ width: 50, height: 50, borderRadius: 12, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#CBD5E1', fontSize: 20 }}>📷</div>,
     },
+    {
+      title: 'AI',
+      dataIndex: 'is_ai_classified',
+      width: 60,
+      render: (v, record) => v ? (
+        <Tag color="cyan" icon={<MdPsychology style={{ verticalAlign: 'middle' }} />} style={{ borderRadius: 6, fontWeight: 700 }}>
+          {Math.round(record.confidence_score * 100)}%
+        </Tag>
+      ) : <span style={{ color: '#CBD5E1' }}>-</span>,
+    },
     { title: 'Lokasi', dataIndex: 'address', ellipsis: true, render: (v) => <span style={{ fontWeight: 600 }}>{v}</span> },
     { title: 'Kecamatan', dataIndex: 'district', width: 120 },
     {
@@ -82,6 +92,16 @@ export default function Reports() {
           color: DAMAGE_COLORS[v],
         }}>{v}</span>
       ),
+    },
+    {
+      title: 'Estimasi Biaya',
+      dataIndex: 'estimated_cost_asphalt',
+      width: 140,
+      render: (v) => v ? (
+        <span style={{ fontWeight: 700, color: '#6366F1' }}>
+          Rp {new Intl.NumberFormat('id-ID').format(v)}
+        </span>
+      ) : <span style={{ color: '#CBD5E1' }}>-</span>,
     },
     {
       title: 'Skor',
@@ -250,6 +270,40 @@ export default function Reports() {
               <div style={{ marginTop: 16, padding: '14px 16px', background: '#F8FAFC', borderRadius: 14 }}>
                 <p style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Deskripsi</p>
                 <p style={{ fontSize: 15, color: '#0F172A', lineHeight: 1.6 }}>{detail.description}</p>
+              </div>
+            )}
+
+            {detail.estimated_cost_asphalt && (
+              <div style={{ marginTop: 24, borderTop: '1px solid #F1F5F9', paddingTop: 20 }}>
+                <h4 style={{ fontSize: 13, fontWeight: 800, color: '#1E293B', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  💰 Estimasi Biaya Perbaikan (Luas: {detail.road_length * detail.road_width}m²)
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div style={{ padding: '16px', background: 'linear-gradient(135deg, #F8FAFC, #EFF6FF)', borderRadius: 16, border: '1px solid #DBEAFE' }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>ASPAL</p>
+                    <p style={{ fontSize: 18, fontWeight: 900, color: '#2563EB' }}>
+                      Rp {new Intl.NumberFormat('id-ID').format(detail.estimated_cost_asphalt)}
+                    </p>
+                  </div>
+                  <div style={{ padding: '16px', background: 'linear-gradient(135deg, #F8FAFC, #FFFBEB)', borderRadius: 16, border: '1px solid #FEF3C7' }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>BETON / COR</p>
+                    <p style={{ fontSize: 18, fontWeight: 900, color: '#D97706' }}>
+                      Rp {new Intl.NumberFormat('id-ID').format(detail.estimated_cost_concrete)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {detail.is_ai_classified && (
+              <div style={{ marginTop: 16, padding: '12px 16px', background: '#ECFDF5', borderRadius: 14, border: '1px solid #10B981', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <MdPsychology style={{ fontSize: 24, color: '#059669' }} />
+                <div>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#065F46' }}>DIKLASIFIKASI OLEH AI</p>
+                  <p style={{ margin: 0, fontSize: 12, color: '#059669' }}>
+                    Confidence Score: {(detail.confidence_score * 100).toFixed(1)}%
+                  </p>
+                </div>
               </div>
             )}
           </div>

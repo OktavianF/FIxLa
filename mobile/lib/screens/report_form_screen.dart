@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -7,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
+import '../services/damage_classifier.dart';
 import '../theme/app_theme.dart';
 
 class ReportFormScreen extends StatefulWidget {
@@ -21,18 +23,36 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   final _descCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _districtCtrl = TextEditingController();
+  final _lengthCtrl = TextEditingController();
+  final _widthCtrl = TextEditingController();
   String _damageLevel = 'sedang';
+  double? _confidence;
+  bool _isAnalyzing = false;
 
   double? _lat;
   double? _lng;
   final List<XFile> _photos = [];
   bool _loading = false;
   bool _locating = false;
+  late DamageClassifier _classifier;
 
   @override
   void initState() {
     super.initState();
+    _classifier = DamageClassifier();
+    _classifier.initModel();
     _getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    _classifier.dispose();
+    _descCtrl.dispose();
+    _addressCtrl.dispose();
+    _districtCtrl.dispose();
+    _lengthCtrl.dispose();
+    _widthCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -52,9 +72,22 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-      );
+      // Mencoba mendapatkan lokasi dengan timeout agar tidak menunggu selamanya
+      Position? pos;
+      try {
+        pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        ).timeout(const Duration(seconds: 10));
+      } catch (e) {
+        // Jika timeout atau error, coba ambil lokasi terakhir yang diketahui
+        pos = await Geolocator.getLastKnownPosition();
+        log("Gagal mendapatkan lokasi baru, menggunakan lokasi terakhir: $e");
+      }
+
+      if (pos == null) {
+        throw Exception("Gagal mendapatkan lokasi GPS");
+      }
+
       _lat = pos.latitude;
       _lng = pos.longitude;
 
@@ -77,6 +110,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       setState(() {
         _photos.addAll(images.take(5 - _photos.length));
       });
+      _analyzeDamage();
     }
   }
 
@@ -86,6 +120,24 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     final image = await picker.pickImage(source: ImageSource.camera, maxWidth: 1280, imageQuality: 75);
     if (image != null) {
       setState(() => _photos.add(image));
+      _analyzeDamage();
+    }
+  }
+
+  Future<void> _analyzeDamage() async {
+    if (_photos.isEmpty) return;
+    setState(() => _isAnalyzing = true);
+    
+    // Jalankan inferensi menggunakan model ML TFLite
+    // Kita gunakan foto pertama yang diambil
+    final result = await _classifier.classifyImage(_photos.first);
+    
+    if (mounted) {
+      setState(() {
+        _damageLevel = result.damageLevel;
+        _confidence = result.confidence;
+        _isAnalyzing = false;
+      });
     }
   }
 
@@ -112,6 +164,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         'address': _addressCtrl.text.trim(),
         'district': _districtCtrl.text.trim(),
         'damage_level': _damageLevel,
+        'road_length': _lengthCtrl.text.trim(),
+        'road_width': _widthCtrl.text.trim(),
+        'confidence_score': _confidence?.toStringAsFixed(4),
+        'is_ai_classified': 'true',
         'description': _descCtrl.text.trim(),
       });
 
@@ -187,7 +243,9 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
                           const SizedBox(height: 16),
                           _buildLocationCard(),
                           const SizedBox(height: 16),
-                          _buildDamageCard(),
+                          _buildDimensionsCard(),
+                          const SizedBox(height: 16),
+                          _buildAIResultCard(),
                           const SizedBox(height: 16),
                           _buildDescCard(),
                         ],
@@ -390,46 +448,120 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     );
   }
 
-  Widget _buildDamageCard() {
+  Widget _buildDimensionsCard() {
     return _buildCard(
-      title: 'Tingkat Keparahan *',
-      icon: Icons.warning_rounded,
-      child: Row(
-        children: ['ringan', 'sedang', 'berat'].map((level) {
-          final selected = _damageLevel == level;
-          return Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(right: level != 'berat' ? 8 : 0),
-              child: GestureDetector(
-                onTap: () => setState(() => _damageLevel = level),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: selected ? AppTheme.getDamageColor(level).withValues(alpha: 0.1) : AppTheme.neutral100,
-                    border: Border.all(color: selected ? AppTheme.getDamageColor(level) : Colors.transparent, width: 2),
-                    borderRadius: BorderRadius.circular(16),
+      title: 'Dimensi Kerusakan',
+      icon: Icons.straighten_rounded,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _lengthCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Panjang (m)',
+                    filled: true,
+                    fillColor: AppTheme.neutral100,
+                    prefixIcon: Icon(Icons.horizontal_rule_rounded),
                   ),
-                  child: Column(
+                  validator: (v) => (v == null || v.isEmpty) ? 'Wajib isi' : null,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextFormField(
+                  controller: _widthCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Lebar (m)',
+                    filled: true,
+                    fillColor: AppTheme.neutral100,
+                    prefixIcon: Icon(Icons.height_rounded),
+                  ),
+                  validator: (v) => (v == null || v.isEmpty) ? 'Wajib isi' : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Masukkan estimasi panjang dan lebar area yang rusak dalam satuan meter.',
+            style: TextStyle(fontSize: 12, color: AppTheme.neutral700),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAIResultCard() {
+    return _buildCard(
+      title: 'Hasil Analisis AI',
+      icon: Icons.psychology_rounded,
+      child: _photos.isEmpty 
+        ? const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Text('Ambil foto untuk memulai analisis', style: TextStyle(color: AppTheme.neutral600, fontStyle: FontStyle.italic)),
+            ),
+          )
+        : _isAnalyzing
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Column(
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 12),
+                    const Text('Menganalisis tingkat keparahan...', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                  ],
+                ),
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getDamageColor(_damageLevel).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.getDamageColor(_damageLevel), width: 2),
+                  ),
+                  child: Row(
                     children: [
                       Icon(
-                        level == 'ringan' ? Icons.info_rounded : level == 'sedang' ? Icons.warning_amber_rounded : Icons.dangerous_rounded,
-                        color: selected ? AppTheme.getDamageColor(level) : AppTheme.neutral300,
-                        size: 32,
+                        _damageLevel == 'ringan' ? Icons.info_rounded : _damageLevel == 'sedang' ? Icons.warning_amber_rounded : Icons.dangerous_rounded,
+                        color: AppTheme.getDamageColor(_damageLevel),
+                        size: 40,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        level.toUpperCase(),
-                        style: TextStyle(fontSize: 12, fontWeight: selected ? FontWeight.w800 : FontWeight.w600, color: selected ? AppTheme.getDamageColor(level) : AppTheme.neutral700),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _damageLevel.toUpperCase(),
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.getDamageColor(_damageLevel)),
+                            ),
+                            Text(
+                              'Confidence: ${(_confidence! * 100).toStringAsFixed(1)}%',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.getDamageColor(_damageLevel).withValues(alpha: 0.8)),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Berdasarkan pemindaian Model AI (TFLite). Pastikan tingkat akurasi sesuai dengan gambar.',
+                  style: TextStyle(fontSize: 11, color: AppTheme.neutral600, height: 1.4),
+                ),
+              ],
             ),
-          );
-        }).toList(),
-      ),
     );
   }
 
@@ -481,13 +613,5 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _descCtrl.dispose();
-    _addressCtrl.dispose();
-    _districtCtrl.dispose();
-    super.dispose();
   }
 }

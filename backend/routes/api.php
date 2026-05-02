@@ -49,6 +49,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
       Route::get('/dashboard/priority-ranking', [DashboardController::class , 'priorityRanking']);
       Route::get('/dashboard/heatmap', [DashboardController::class , 'heatmapData']);
       Route::get('/dashboard/monthly-trend', [DashboardController::class , 'monthlyTrend']);
+      Route::get('/dashboard/cost-summary', [DashboardController::class , 'costSummary']);
       Route::patch('/reports/{report}/status', [ReportController::class , 'updateStatus']);
       Route::delete('/reports/{report}', [ReportController::class , 'destroy']);
       Route::post('/cost-estimation', [CostEstimationController::class , 'estimate']);

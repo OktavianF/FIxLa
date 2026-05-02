@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Report;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -51,6 +52,10 @@ class DatabaseSeeder extends Seeder
                 'traffic_level' => 0.8,
                 'facility_proximity' => 0.7,
                 'status' => 'verified',
+                'road_length' => 12.5,
+                'road_width' => 4.0,
+                'confidence_score' => 0.9452,
+                'is_ai_classified' => true,
                 'verified_at' => now()->subDays(2),
             ],
             [
@@ -66,6 +71,10 @@ class DatabaseSeeder extends Seeder
                 'traffic_level' => 0.6,
                 'facility_proximity' => 0.5,
                 'status' => 'scheduled',
+                'road_length' => 25.0,
+                'road_width' => 3.5,
+                'confidence_score' => 0.8812,
+                'is_ai_classified' => true,
                 'verified_at' => now()->subDays(5),
                 'scheduled_at' => now()->subDays(1),
             ],
@@ -82,6 +91,10 @@ class DatabaseSeeder extends Seeder
                 'traffic_level' => 0.3,
                 'facility_proximity' => 0.2,
                 'status' => 'submitted',
+                'road_length' => 5.0,
+                'road_width' => 4.0,
+                'confidence_score' => 0.9201,
+                'is_ai_classified' => true,
             ],
             [
                 'user_id' => 3,
@@ -96,6 +109,10 @@ class DatabaseSeeder extends Seeder
                 'traffic_level' => 0.9,
                 'facility_proximity' => 0.8,
                 'status' => 'under_repair',
+                'road_length' => 18.0,
+                'road_width' => 5.0,
+                'confidence_score' => 0.9788,
+                'is_ai_classified' => true,
                 'verified_at' => now()->subDays(10),
                 'scheduled_at' => now()->subDays(7),
                 'repair_started_at' => now()->subDays(2),
@@ -113,6 +130,10 @@ class DatabaseSeeder extends Seeder
                 'traffic_level' => 0.7,
                 'facility_proximity' => 0.9,
                 'status' => 'completed',
+                'road_length' => 2.0,
+                'road_width' => 2.0,
+                'confidence_score' => 0.8541,
+                'is_ai_classified' => true,
                 'verified_at' => now()->subDays(15),
                 'scheduled_at' => now()->subDays(12),
                 'repair_started_at' => now()->subDays(8),
@@ -121,7 +142,9 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($reports as $reportData) {
-            \App\Models\Report::create($reportData);
+            $report = Report::create($reportData);
+            $report->calculateCostEstimation();
+            $report->save();
         }
 
         // Create status histories

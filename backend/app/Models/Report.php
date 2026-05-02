@@ -21,6 +21,10 @@ class Report extends Model
     'description',
     'road_length',
     'road_width',
+    'confidence_score',
+    'is_ai_classified',
+    'estimated_cost_asphalt',
+    'estimated_cost_concrete',
     'priority_score',
     'report_count',
     'traffic_level',
@@ -40,6 +44,10 @@ class Report extends Model
     'facility_proximity' => 'decimal:2',
     'road_length' => 'decimal:2',
     'road_width' => 'decimal:2',
+    'confidence_score' => 'decimal:4',
+    'is_ai_classified' => 'boolean',
+    'estimated_cost_asphalt' => 'decimal:2',
+    'estimated_cost_concrete' => 'decimal:2',
     'verified_at' => 'datetime',
     'scheduled_at' => 'datetime',
     'repair_started_at' => 'datetime',
@@ -64,6 +72,32 @@ class Report extends Model
   public function notifications(): HasMany
   {
     return $this->hasMany(AppNotification::class);
+  }
+
+  /**
+   * Calculate Road Repair Cost Estimation
+   */
+  public function calculateCostEstimation(): void
+  {
+    if (!$this->road_length || $this->road_length <= 0) return;
+    
+    $width = $this->road_width ?? 4.0; 
+    $area = $this->road_length * $width;
+    
+    // Multiplier based on damage level
+    $multiplier = match ($this->damage_level) {
+        'ringan' => 0.6,
+        'sedang' => 0.8,
+        'berat' => 1.0,
+        default => 1.0,
+    };
+    
+    // Pricing constants from CostEstimationController
+    $asphaltPricePerM2 = 450000;
+    $concretePricePerM2 = 780000;
+    
+    $this->estimated_cost_asphalt = round($area * $asphaltPricePerM2 * $multiplier, 2);
+    $this->estimated_cost_concrete = round($area * $concretePricePerM2 * $multiplier, 2);
   }
 
   /**
