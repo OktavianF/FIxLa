@@ -96,7 +96,8 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
           _addressCtrl.text = '${p.street}, ${p.subLocality}, ${p.locality}';
-          _districtCtrl.text = p.subLocality ?? '';
+          // Menggunakan locality untuk Kecamatan
+          _districtCtrl.text = p.locality ?? p.subLocality ?? '';
         }
       } catch (_) {}
     } catch (_) {}
@@ -164,10 +165,10 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         'address': _addressCtrl.text.trim(),
         'district': _districtCtrl.text.trim(),
         'damage_level': _damageLevel,
-        'road_length': _lengthCtrl.text.trim(),
-        'road_width': _widthCtrl.text.trim(),
+        'road_length': _lengthCtrl.text.trim().replaceAll(',', '.'),
+        'road_width': _widthCtrl.text.trim().replaceAll(',', '.'),
         'confidence_score': _confidence?.toStringAsFixed(4),
-        'is_ai_classified': 'true',
+        'is_ai_classified': '1',
         'description': _descCtrl.text.trim(),
       });
 
@@ -189,8 +190,13 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
       context.pop(true);
     } catch (e) {
       if (mounted) {
+        String errMsg = 'Gagal mengirim laporan';
+        if (e is DioException && e.response != null) {
+          errMsg = e.response?.data['message'] ?? e.response?.data['error'] ?? errMsg;
+          log('Error data: ${e.response?.data}');
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal mengirim laporan'), backgroundColor: AppTheme.danger),
+          SnackBar(content: Text(errMsg), backgroundColor: AppTheme.danger),
         );
       }
     } finally {

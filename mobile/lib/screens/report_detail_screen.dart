@@ -36,172 +36,345 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_report == null) {
+      return const Scaffold(body: Center(child: Text('Laporan tidak ditemukan')));
+    }
+
+    final photos = _report!['photos'] as List?;
+    final hasPhotos = photos != null && photos.isNotEmpty;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Laporan #${widget.reportId}')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _report == null
-              ? const Center(child: Text('Laporan tidak ditemukan'))
-              : SingleChildScrollView(
+      backgroundColor: Colors.white,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 280,
+            pinned: true,
+            backgroundColor: AppTheme.primary,
+            iconTheme: const IconThemeData(color: Colors.white),
+            title: const Text('', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            flexibleSpace: FlexibleSpaceBar(
+              background: hasPhotos
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        PageView.builder(
+                          itemCount: photos.length,
+                          itemBuilder: (_, i) {
+                            final url = photos[i]['url'];
+                            return CachedNetworkImage(
+                              imageUrl: url ?? '',
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                              errorWidget: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.broken_image, size: 48)),
+                            );
+                          },
+                        ),
+                        // Gradient Overlay for Header Clarity
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 100,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Colors.black.withValues(alpha: 0.5), Colors.transparent],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Container(
+                      color: AppTheme.primaryDark,
+                      child: const Center(child: Icon(Icons.image_not_supported, size: 64, color: Colors.white54)),
+                    ),
+            ),
+          ),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Transform.translate(
+              offset: const Offset(0, -32), // Naik lebih tinggi
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 24, right: 24, top: 16, bottom: 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Photos
-                      if ((_report!['photos'] as List?)?.isNotEmpty == true)
-                        SizedBox(
-                          height: 220,
-                          child: PageView.builder(
-                            itemCount: (_report!['photos'] as List).length,
-                            itemBuilder: (_, i) {
-                              final url = _report!['photos'][i]['url'];
-                              return CachedNetworkImage(
-                                imageUrl: url ?? '',
-                                width: double.infinity,
-                                height: 220,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
-                                errorWidget: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.broken_image, size: 48)),
-                              );
-                            },
+                      // Indikator garis atas (Handle Pull)
+                      Center(
+                        child: Container(
+                          width: 48,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        )
-                      else
-                        Container(
-                          height: 180,
-                          color: Colors.grey[200],
-                          child: const Center(child: Icon(Icons.image_not_supported, size: 48, color: Colors.grey)),
                         ),
+                      ),
+                      const SizedBox(height: 32), // Memberi jarak lega dengan foto
 
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Status and damage badges
-                            Row(
+                      // Judul Header (Laporan #ID)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Laporan #${widget.reportId}',
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                          ),
+                          _badge(
+                            AppTheme.getStatusLabel(_report!['status'] ?? ''),
+                            AppTheme.getStatusColor(_report!['status'] ?? ''),
+                            null, // Icon dihilangkan agar badge status terlihat clean (pill shape)
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Baris Damage Label
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _badge(
+                            'Kerusakan ${(_report!['damage_level'] ?? '').toString().toUpperCase()}',
+                            AppTheme.getDamageColor(_report!['damage_level'] ?? ''),
+                            Icons.warning_amber_rounded,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Lokasi
+                      const Text('LOKASI', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.location_on_rounded, size: 24, color: AppTheme.primary),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _badge(
-                                  AppTheme.getStatusLabel(_report!['status'] ?? ''),
-                                  AppTheme.getStatusColor(_report!['status'] ?? ''),
-                                  AppTheme.getStatusIcon(_report!['status'] ?? ''),
+                                Text(
+                                  _report!['address'] ?? 'Lokasi tidak diketahui',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.4),
                                 ),
-                                const SizedBox(width: 8),
-                                _badge(
-                                  (_report!['damage_level'] ?? '').toString().toUpperCase(),
-                                  AppTheme.getDamageColor(_report!['damage_level'] ?? ''),
-                                  null,
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Kec. ${_report!['district'] ?? '-'}',
+                                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+                      const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                      const SizedBox(height: 24),
 
-                            // Address
-                            Text(
-                              _report!['address'] ?? 'Lokasi tidak diketahui',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Kecamatan ${_report!['district'] ?? '-'}',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Description
-                            if (_report!['description'] != null) ...[
-                              const Text('Deskripsi', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                              const SizedBox(height: 4),
-                              Text(_report!['description']),
-                              const SizedBox(height: 16),
-                            ],
-
-                            // Info Cards
-                            _infoRow('Skor Prioritas', _report!['priority_score']?.toString() ?? '-'),
-                            _infoRow('Jumlah Laporan', '${_report!['report_count'] ?? 0}×'),
-                            _infoRow('Pelapor', _report!['user']?['name'] ?? '-'),
-                            _infoRow('Tanggal', _formatDate(_report!['created_at'])),
-
-                            const SizedBox(height: 20),
-
-                            // Status Timeline
-                            if ((_report!['status_histories'] as List?)?.isNotEmpty == true) ...[
-                              const Text('Riwayat Status', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                              const SizedBox(height: 12),
-                              ...(_report!['status_histories'] as List).map((h) => _timelineItem(h)),
-                            ],
+                      // Kotak Statistik Dinamis (Icon menyamping, biar tidak kepanjangan)
+                      Row(
+                        children: [
+                          Expanded(child: _statBox("Prioritas", _report!['priority_score']?.toString() ?? '-', Icons.stars_rounded)),
+                          const SizedBox(width: 12),
+                          Expanded(child: _statBox("Pelapor", '${_report!['report_count'] ?? 0}', Icons.people_alt_rounded)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Kartu Info User & Tanggal
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.neutral100, // Warna bg lebih padu
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Column(
+                          children: [
+                            _infoRow(Icons.person_rounded, 'Pelapor', _report!['user']?['name'] ?? '-'),
+                            const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: Color(0xFFE0E0E0))),
+                            _infoRow(Icons.calendar_month_rounded, 'Tanggal', _formatDate(_report!['created_at'])),
                           ],
                         ),
                       ),
+                      const SizedBox(height: 32),
+
+                      // Deskripsi
+                      if (_report!['description'] != null && _report!['description'].toString().isNotEmpty) ...[
+                        const Text('DESKRIPSI', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        const SizedBox(height: 12),
+                        Text(
+                          _report!['description'],
+                          style: const TextStyle(fontSize: 15, height: 1.6, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 32),
+                      ],
+
+                      // Timeline / Riwayat Status
+                      if ((_report!['status_histories'] as List?)?.isNotEmpty == true) ...[
+                        const Text('RIWAYAT STATUS', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: (_report!['status_histories'] as List)
+                                .map((h) => _timelineItem(h, isLast: h == (_report!['status_histories'] as List).last))
+                                .toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 48), // Spasi paling bawah biar enak di-scroll
+                      ],
                     ],
                   ),
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _badge(String label, Color color, IconData? icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[Icon(icon, size: 14, color: color), const SizedBox(width: 4)],
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+          if (icon != null) ...[Icon(icon, size: 16, color: color), const SizedBox(width: 6)],
+          Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color, letterSpacing: 0.3)),
         ],
       ),
     );
   }
 
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _statBox(String title, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey[600])),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Icon(icon, size: 28, color: AppTheme.primary),
+          const SizedBox(height: 12),
+          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
+          const SizedBox(height: 4),
+          Text(title, style: TextStyle(fontSize: 13, color: Colors.grey[700], fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  Widget _timelineItem(Map<String, dynamic> history) {
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.grey[500]),
+        const SizedBox(width: 10),
+        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+        const Spacer(),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _timelineItem(Map<String, dynamic> history, {bool isLast = false}) {
     final toStatus = history['to_status'] ?? '';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+    return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Column(
             children: [
               Container(
-                width: 24,
-                height: 24,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: AppTheme.getStatusColor(toStatus),
+                  color: AppTheme.getStatusColor(toStatus).withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(AppTheme.getStatusIcon(toStatus), color: Colors.white, size: 14),
+                child: Center(
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: AppTheme.getStatusColor(toStatus),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
               ),
-              Container(width: 2, height: 24, color: Colors.grey[300]),
+              if (!isLast) Expanded(child: Container(width: 2, color: Colors.grey[200])),
             ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppTheme.getStatusLabel(toStatus), style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text(
-                  _formatDate(history['created_at']),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-                if (history['notes'] != null)
-                  Text(history['notes'], style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppTheme.getStatusLabel(toStatus), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.access_time_rounded, size: 14, color: Colors.grey[500]),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDate(history['created_at']),
+                        style: TextStyle(fontSize: 13, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  if (history['notes'] != null && history['notes'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50], // AppTheme.neutral100
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Text(history['notes'], style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.5)),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],
