@@ -12,7 +12,7 @@ Portal admin/pemerintah untuk memantau laporan jalan rusak, mengelola status, me
 
 ## 2. Menjalankan Lokal
 ```bash
-cd /home/runner/work/FIxLa/FIxLa/dashboard
+cd dashboard
 npm install
 npm run dev
 ```

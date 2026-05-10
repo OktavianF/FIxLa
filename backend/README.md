@@ -10,7 +10,7 @@ Backend utama FixLA berbasis Laravel untuk autentikasi, manajemen laporan jalan 
 
 ## 2. Menjalankan Secara Lokal
 ```bash
-cd /home/runner/work/FIxLa/FIxLa/backend
+cd backend
 composer install
 cp .env.example .env
 php artisan key:generate

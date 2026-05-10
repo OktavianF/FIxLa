@@ -26,7 +26,7 @@ FixLA membantu warga melaporkan kerusakan jalan berbasis lokasi/foto, lalu memba
 
 ## 4. Struktur Repository
 ```text
-FIxLa/
+FixLA/
 ├── backend/       # REST API dan logika bisnis utama
 ├── dashboard/     # Portal admin/pemerintah
 ├── mobile/        # Aplikasi mobile warga
@@ -37,7 +37,7 @@ FIxLa/
 
 ### 5.1 Backend
 ```bash
-cd /home/runner/work/FIxLa/FIxLa/backend
+cd backend
 composer install
 cp .env.example .env
 php artisan key:generate
@@ -48,7 +48,7 @@ php artisan serve
 
 ### 5.2 Dashboard
 ```bash
-cd /home/runner/work/FIxLa/FIxLa/dashboard
+cd dashboard
 npm install
 npm run dev
 ```
@@ -56,14 +56,14 @@ Dashboard berjalan di `http://localhost:3000` dan melakukan proxy `/api` ke back
 
 ### 5.3 Mobile
 ```bash
-cd /home/runner/work/FIxLa/FIxLa/mobile
+cd mobile
 flutter pub get
 flutter run
 ```
 
 ### 5.4 Landing Page
 ```bash
-cd /home/runner/work/FIxLa/FIxLa/landing-page
+cd landing-page
 composer install
 cp .env.example .env
 php artisan key:generate

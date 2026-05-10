@@ -9,7 +9,7 @@ Landing page publik FixLA untuk memperkenalkan solusi, fitur utama, dan ajakan a
 
 ## 2. Menjalankan Lokal
 ```bash
-cd /home/runner/work/FIxLa/FIxLa/landing-page
+cd landing-page
 composer install
 cp .env.example .env
 php artisan key:generate

@@ -11,7 +11,7 @@ Aplikasi Flutter untuk warga melaporkan jalan rusak, melihat laporan publik, mem
 
 ## 2. Menjalankan Lokal
 ```bash
-cd /home/runner/work/FIxLa/FIxLa/mobile
+cd mobile
 flutter pub get
 flutter run
 ```
