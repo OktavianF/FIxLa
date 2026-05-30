@@ -83,4 +83,51 @@ class NotificationController extends Controller
             'data'    => ['count' => $count],
         ]);
     }
+
+    /**
+     * List all notifications system-wide (admin only).
+     */
+    public function adminIndex(Request $request): JsonResponse
+    {
+        $notifications = AppNotification::with(['report:id,address,status', 'user:id,name'])
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $notifications->items(),
+            'meta'    => [
+                'current_page' => $notifications->currentPage(),
+                'last_page'    => $notifications->lastPage(),
+                'total'        => $notifications->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get the count of all unread notifications system-wide (admin only).
+     */
+    public function adminUnreadCount(): JsonResponse
+    {
+        $count = AppNotification::where('is_read', false)->count();
+
+        return response()->json([
+            'success' => true,
+            'data'    => ['count' => $count],
+        ]);
+    }
+
+    /**
+     * Mark all notifications as read system-wide (admin only).
+     */
+    public function adminMarkAllAsRead(): JsonResponse
+    {
+        AppNotification::where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Semua notifikasi telah dibaca',
+        ]);
+    }
 }

@@ -12,6 +12,7 @@ import 'screens/report_detail_screen.dart';
 import 'screens/my_reports_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/notification_screen.dart';
+import 'screens/faq_screen.dart';
 
 void main() {
   runApp(const ProviderScope(child: FixLAApp()));
@@ -34,6 +35,7 @@ final _router = GoRouter(
     GoRoute(path: '/my-reports', builder: (_, __) => const MyReportsScreen()),
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
     GoRoute(path: '/notifications', builder: (_, __) => const NotificationScreen()),
+    GoRoute(path: '/faq', builder: (_, __) => const FaqScreen()),
   ],
 );
 

@@ -98,4 +98,37 @@ class AuthController extends Controller
             'data'    => new UserResource($user),
         ]);
     }
+
+    /**
+     * Update user profile including avatar.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'avatar' => 'nullable|image|max:5120',
+        ]);
+
+        $user->name = $validated['name'];
+        $user->phone = $validated['phone'] ?? $user->phone;
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            }
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $path;
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui',
+            'data'    => new UserResource($user),
+        ]);
+    }
 }

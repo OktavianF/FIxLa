@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_heatmap/flutter_map_heatmap.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/api_service.dart';
@@ -18,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   String _userName = '';
+  String? _avatarUrl;
   List<dynamic> _recentReports = [];
   List<dynamic> _myReports = [];
   List<dynamic> _mapReports = [];
@@ -38,7 +41,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final userData = prefs.getString('user_data');
     if (userData != null) {
       final user = jsonDecode(userData);
-      setState(() => _userName = user['name'] ?? '');
+      setState(() {
+        _userName = user['name'] ?? '';
+        if (user['avatar'] != null) {
+          _avatarUrl = '${ApiService.baseUrl.replaceAll('/api/v1', '')}/storage/${user['avatar']}';
+        } else {
+          _avatarUrl = null;
+        }
+      });
     }
   }
 
@@ -242,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        Icon(Icons.shield_rounded, size: 72, color: Colors.white.withValues(alpha: 0.9)),
+                        Icon(Icons.construction_rounded, size: 72, color: Colors.white.withValues(alpha: 0.9)),
                       ],
                     ),
                   ),
@@ -401,82 +411,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMapTab() {
     return Stack(
       children: [
-        GoogleMap(
-          initialCameraPosition: const CameraPosition(
-            target: LatLng(-7.115, 112.417),
-            zoom: 13,
+        FlutterMap(
+          options: const MapOptions(
+            initialCenter: LatLng(-7.115, 112.417),
+            initialZoom: 13,
           ),
-          onMapCreated: (controller) {
-            controller.setMapStyle(_mapStyle);
-          },
-          zoomControlsEnabled: false,
-          myLocationButtonEnabled: false,
-          compassEnabled: false,
-          mapToolbarEnabled: false,
-          markers: _mapReports.map((r) {
-            final lat = double.tryParse(r['latitude'].toString()) ?? 0.0;
-            final lng = double.tryParse(r['longitude'].toString()) ?? 0.0;
-            return Marker(
-              markerId: MarkerId(r['id'].toString()),
-              position: LatLng(lat, lng),
-              infoWindow: InfoWindow(title: r['address'], snippet: r['damage_level']),
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                r['damage_level'] == 'berat' ? BitmapDescriptor.hueRed : r['damage_level'] == 'sedang' ? BitmapDescriptor.hueOrange : BitmapDescriptor.hueYellow,
+          children: [
+            TileLayer(
+              urlTemplate: 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.fixla.app',
+            ),
+            if (_mapReports.isNotEmpty)
+              HeatMapLayer(
+                heatMapDataSource: InMemoryHeatMapDataSource(
+                  data: _mapReports.map((r) {
+                    final lat = double.tryParse(r['latitude'].toString()) ?? 0.0;
+                    final lng = double.tryParse(r['longitude'].toString()) ?? 0.0;
+                    final damage = r['damage_level']?.toString().toLowerCase().trim() ?? 'ringan';
+                    
+                    double weight = 0.5; // ringan
+                    if (damage == 'sedang') weight = 0.8;
+                    if (damage == 'berat') weight = 1.0;
+                    
+                    return WeightedLatLng(LatLng(lat, lng), weight);
+                  }).toList(),
+                ),
+                heatMapOptions: HeatMapOptions(
+                  gradient: {
+                    0.2: Colors.green,
+                    0.5: Colors.yellow,
+                    0.8: Colors.red,
+                  },
+                  minOpacity: 0.4,
+                  radius: 40,
+                ),
               ),
-            );
-          }).toSet(),
+          ],
         ),
         
-        // Floating Top Search Bar (Glass)
-        Positioned(
-          top: 64,
-          left: 24,
-          right: 24,
-          child: GlassContainer(
-            borderRadius: BorderRadius.circular(24),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: Colors.white,
-            opacity: 0.85,
-            child: Row(
-              children: [
-                const Icon(Icons.search_rounded, color: AppTheme.neutral300),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('Cari lokasi laporan...', style: TextStyle(color: AppTheme.neutral300, fontSize: 16, fontWeight: FontWeight.w500))),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.tune_rounded, color: AppTheme.primary, size: 20),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Legend
-        Positioned(
-          top: 128,
-          right: 24,
-          child: GlassContainer(
-            borderRadius: BorderRadius.circular(16),
-            padding: const EdgeInsets.all(12),
-            color: Colors.white,
-            opacity: 0.9,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Tingkat Kerusakan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.neutral900)),
-                const SizedBox(height: 8),
-                _legendItem(Colors.red, 'Berat'),
-                const SizedBox(height: 4),
-                _legendItem(Colors.orange, 'Sedang'),
-                const SizedBox(height: 4),
-                _legendItem(Colors.amber, 'Ringan'),
-              ],
-            ),
-          ),
-        ),
-
         // Floating Bottom Map Detail Sheet
         Positioned(
           bottom: 150,
@@ -513,16 +485,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _legendItem(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.neutral700, fontWeight: FontWeight.w600)),
-      ],
-    );
-  }
 
   Widget _buildReportsTab() {
     return Column(
@@ -589,11 +551,14 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 4)),
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)),
                   child: CircleAvatar(
-                    radius: 48, 
-                    backgroundColor: Colors.white, 
-                    child: Text(_userName.isNotEmpty ? _userName[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+                    radius: 40,
+                    backgroundColor: Colors.white,
+                    backgroundImage: _avatarUrl != null ? CachedNetworkImageProvider(_avatarUrl!) : null,
+                    child: _avatarUrl == null 
+                        ? Text(_userName.isNotEmpty ? _userName[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: AppTheme.primary))
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -614,13 +579,16 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Text('Pengaturan Akun', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.neutral700)),
                 const SizedBox(height: 16),
-                _profileTile(Icons.person_outline, 'Edit Profil', () => context.push('/profile')),
+                _profileTile(Icons.person_outline, 'Edit Profil', () async {
+                  await context.push('/profile');
+                  _loadUser();
+                }),
                 _profileTile(Icons.assignment_outlined, 'Laporan Saya', () => context.push('/my-reports')),
                 _profileTile(Icons.notifications_outlined, 'Notifikasi', () => context.push('/notifications')),
                 const SizedBox(height: 32),
                 const Text('Lainnya', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.neutral700)),
                 const SizedBox(height: 16),
-                _profileTile(Icons.help_outline, 'Bantuan & FAQ', () {}),
+                _profileTile(Icons.help_outline, 'Bantuan & FAQ', () => context.push('/faq')),
                 _profileTile(Icons.logout_rounded, 'Keluar', () async {
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.clear();
@@ -669,22 +637,3 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-const String _mapStyle = '''
-[
-  {"elementType":"geometry","stylers":[{"color":"#f5f5f5"}]},
-  {"elementType":"labels.icon","stylers":[{"visibility":"off"}]},
-  {"elementType":"labels.text.fill","stylers":[{"color":"#616161"}]},
-  {"elementType":"labels.text.stroke","stylers":[{"color":"#f5f5f5"}]},
-  {"featureType":"administrative.land_parcel","elementType":"labels.text.fill","stylers":[{"color":"#bdbdbd"}]},
-  {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#eeeeee"}]},
-  {"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#757575"}]},
-  {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#e5e5e5"}]},
-  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#ffffff"}]},
-  {"featureType":"road.arterial","elementType":"labels.text.fill","stylers":[{"color":"#757575"}]},
-  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#dadada"}]},
-  {"featureType":"road.local","elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]},
-  {"featureType":"transit.line","elementType":"geometry","stylers":[{"color":"#e5e5e5"}]},
-  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#c9c9c9"}]},
-  {"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]}
-]
-''';

@@ -7,8 +7,8 @@ class ApiService {
     if (kIsWeb) {
       return 'http://127.0.0.1:8000/api/v1'; // Flutter Web
     }
-    // IP baru terdeteksi: 192.168.43.144
-    return 'http://192.168.1.4:8000/api/v1'; 
+    // IP Address komputer saat ini untuk akses device fisik/emulator:
+    return 'http://192.168.1.8:8000/api/v1'; 
   }
 
   late final Dio _dio;
@@ -58,6 +58,11 @@ class ApiService {
   Future<Response> logout() => _dio.post('/logout');
 
   Future<Response> getMe() => _dio.get('/me');
+
+  Future<Response> updateProfile(FormData formData) =>
+      _dio.post('/profile', data: formData, options: Options(
+        headers: {'Content-Type': 'multipart/form-data'},
+      ));
 
   // Reports
   Future<Response> getReports({Map<String, dynamic>? params}) =>

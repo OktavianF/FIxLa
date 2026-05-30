@@ -31,6 +31,15 @@ class ReportController extends Controller
         if ($request->filled('district')) {
             $query->where('district', $request->district);
         }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('address', 'like', "%{$search}%")
+                  ->orWhere('district', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
 
         $reports = $query->orderByDesc('created_at')->paginate(20);
 

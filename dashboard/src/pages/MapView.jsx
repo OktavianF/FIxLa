@@ -12,6 +12,7 @@ export default function MapView() {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: 'AIzaSyBymY0_zkvlwMzHDRID7oSAwnUXB9I9eTA',
     libraries: LIBRARIES,
+    version: '3.64',
   });
 
   const { data, isLoading } = useQuery({

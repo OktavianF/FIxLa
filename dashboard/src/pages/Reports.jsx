@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table, Tag, Select, Modal, Input, Button, message, Image, Popconfirm } from 'antd';
 import { motion } from 'framer-motion';
-import { MdVisibility, MdDeleteOutline, MdFilterList, MdPsychology, MdStraighten } from 'react-icons/md';
+import { MdVisibility, MdDeleteOutline, MdFilterList, MdPsychology, MdStraighten, MdClose, MdSearch } from 'react-icons/md';
 import { getReports, updateReportStatus, deleteReport } from '../api';
 
 const STATUS_OPTIONS = [
@@ -16,6 +17,8 @@ const STATUS_OPTIONS = [
 const DAMAGE_COLORS = { ringan: '#10B981', sedang: '#F59E0B', berat: '#EF4444' };
 
 export default function Reports() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({});
   const [detail, setDetail] = useState(null);
@@ -24,9 +27,14 @@ export default function Reports() {
   const [notes, setNotes] = useState('');
   const queryClient = useQueryClient();
 
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ['reports', page, filters],
-    queryFn: () => getReports({ page, ...filters }).then((r) => r.data.data),
+    queryKey: ['reports', page, filters, searchQuery],
+    queryFn: () => getReports({ page, ...filters, ...(searchQuery && { search: searchQuery }) }).then((r) => r.data.data),
   });
 
   const mutation = useMutation({
@@ -181,6 +189,32 @@ export default function Reports() {
         <div>
           <h1 style={{ marginBottom: 6 }}>Laporan Masuk</h1>
           <p style={{ fontSize: 15, color: '#94A3B8', fontWeight: 500 }}>Kelola seluruh laporan kerusakan jalan dari masyarakat.</p>
+          {searchQuery && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, marginTop: 10,
+                padding: '8px 14px', background: '#EEF2FF', borderRadius: 12,
+                border: '1px solid #C7D2FE', width: 'fit-content',
+              }}
+            >
+              <MdSearch style={{ color: '#6366F1', fontSize: 16 }} />
+              <span style={{ fontSize: 13, color: '#4338CA', fontWeight: 600 }}>
+                Hasil pencarian: "{searchQuery}"
+              </span>
+              <button
+                onClick={() => setSearchParams({})}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#6366F1',
+                  display: 'flex', alignItems: 'center', padding: 2, borderRadius: 4,
+                }}
+                title="Hapus pencarian"
+              >
+                <MdClose style={{ fontSize: 16 }} />
+              </button>
+            </motion.div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#94A3B8', fontSize: 13, fontWeight: 600 }}>

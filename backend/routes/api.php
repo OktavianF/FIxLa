@@ -30,6 +30,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
   // Auth
   Route::post('/logout', [AuthController::class , 'logout']);
   Route::get('/me', [AuthController::class , 'me']);
+  Route::post('/profile', [AuthController::class , 'updateProfile']);
 
   // Reports
   Route::post('/reports', [ReportController::class , 'store']);
@@ -53,6 +54,11 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
       Route::patch('/reports/{report}/status', [ReportController::class , 'updateStatus']);
       Route::delete('/reports/{report}', [ReportController::class , 'destroy']);
       Route::post('/cost-estimation', [CostEstimationController::class , 'estimate']);
+
+      // Admin Notifications (system-wide)
+      Route::get('/notifications', [NotificationController::class , 'adminIndex']);
+      Route::get('/notifications/unread-count', [NotificationController::class , 'adminUnreadCount']);
+      Route::patch('/notifications/read-all', [NotificationController::class , 'adminMarkAllAsRead']);
     }
     );
   });

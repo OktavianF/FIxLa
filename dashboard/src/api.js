@@ -52,4 +52,9 @@ export const deleteReport = (id) => api.delete(`/admin/reports/${id}`);
 // Cost Estimation
 export const estimateCost = (data) => api.post('/admin/cost-estimation', data);
 
+// Admin Notifications (system-wide)
+export const getAdminNotifications = (params) => api.get('/admin/notifications', { params });
+export const getAdminUnreadCount = () => api.get('/admin/notifications/unread-count');
+export const markAllAdminNotifsAsRead = () => api.patch('/admin/notifications/read-all');
+
 export default api;
