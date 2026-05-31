@@ -25,4 +25,34 @@ class PageController extends Controller
     {
         return view('contact');
     }
+
+    public function login()
+    {
+        return view('login');
+    }
+
+    public function register()
+    {
+        return view('register');
+    }
+
+    public function lapor()
+    {
+        return view('lapor');
+    }
+
+    public function laporanSaya()
+    {
+        return view('laporan-saya');
+    }
+
+    public function peta()
+    {
+        return view('peta');
+    }
+
+    public function profil()
+    {
+        return view('profil');
+    }
 }

@@ -82,6 +82,8 @@
     
     @include('partials.footer')
     
+    <script src="{{ asset('js/auth.js') }}"></script>
     <script src="{{ asset('js/script.js') }}"></script>
+    @stack('scripts')
 </body>
 </html>

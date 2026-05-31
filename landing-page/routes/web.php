@@ -12,6 +12,12 @@ Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/fitur', [PageController::class, 'fitur'])->name('fitur');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::get('/login', [PageController::class, 'login'])->name('login');
+Route::get('/register', [PageController::class, 'register'])->name('register');
+Route::get('/lapor', [PageController::class, 'lapor'])->name('lapor');
+Route::get('/laporan-saya', [PageController::class, 'laporanSaya'])->name('laporan-saya');
+Route::get('/peta', [PageController::class, 'peta'])->name('peta');
+Route::get('/profil', [PageController::class, 'profil'])->name('profil');
 
 // AUTH (Login/Logout)
 //Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
