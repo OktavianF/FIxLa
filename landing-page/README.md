@@ -1,11 +1,6 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# FixLA Landing Page
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Landing page publik FixLA untuk memperkenalkan solusi, fitur utama, dan ajakan adopsi aplikasi ke masyarakat.
 
 ## About Laravel
 
@@ -42,18 +37,24 @@ We would like to extend our thanks to the following sponsors for funding Laravel
 - **[Redberry](https://redberry.international/laravel-development)**
 - **[Active Logic](https://activelogic.com)**
 
-## Contributing
+## 3. Struktur Relevan
+- `routes/web.php` — route web landing page
+- `resources/views/welcome.blade.php` — konten utama landing page
+- `resources/css` + `resources/js` — asset frontend
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 4. Skrip Utama
+```bash
+composer test
+npm run dev
+npm run build
+```
 
-## Code of Conduct
+## 5. Tujuan Halaman
+- Menjelaskan value proposition FixLA
+- Menampilkan fitur utama platform
+- Mendorong instalasi/partisipasi warga
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 6. Catatan Production
+- Optimasi asset dengan `npm run build`
+- Set `APP_ENV=production`, `APP_DEBUG=false`
+- Gunakan reverse proxy (Nginx/Apache) untuk serving aplikasi
