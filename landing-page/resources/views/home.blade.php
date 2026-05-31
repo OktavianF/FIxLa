@@ -47,7 +47,7 @@
                     </p>
 
                     <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
-                        <a href="{{ asset('apk/fixla.apk') }}"
+                        <a href="https://github.com/OktavianF/FIxLa/releases/download/1.0.0/FixLA.apk"
                             class="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-2xl shadow-[0_20px_40px_rgba(37,99,235,0.3)] hover:shadow-blue-500/50 transition-all duration-300 flex items-center justify-center">
                             <i class="fas fa-cloud-download-alt mr-3"></i>
                             Dapatkan APK

@@ -38,7 +38,7 @@
                 </a>
 
                 {{-- Download APK --}}
-                <a href="{{ asset('apk/fixla.apk') }}" class="px-5 py-2 bg-blue-600 text-white font-bold text-[11px] tracking-[0.12em] rounded-full shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all duration-300 hidden lg:block uppercase">
+                <a href="https://github.com/OktavianF/FIxLa/releases/download/1.0.0/FixLA.apk" class="px-5 py-2 bg-blue-600 text-white font-bold text-[11px] tracking-[0.12em] rounded-full shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all duration-300 hidden lg:block uppercase">
                     Download APK
                 </a>
 
