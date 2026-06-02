@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || 'http://fixla-alb-486742336.ap-southeast-1.elb.amazonaws.com/api/v1',
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

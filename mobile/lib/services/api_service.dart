@@ -4,11 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api/v1'; // Flutter Web
-    }
-    // IP Address komputer saat ini untuk akses device fisik/emulator:
-    return 'http://192.168.1.8:8000/api/v1'; 
+    // API AWS (Application Load Balancer)
+    return 'http://fixla-alb-486742336.ap-southeast-1.elb.amazonaws.com/api/v1';
   }
 
   late final Dio _dio;
