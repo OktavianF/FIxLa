@@ -6,6 +6,7 @@ import 'package:flutter_map_heatmap/flutter_map_heatmap.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
@@ -26,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _mapReports = [];
   bool _loading = true;
   bool _myLoading = true;
+  Map<String, dynamic>? _selectedReport;
 
   @override
   void initState() {
@@ -34,6 +36,38 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadReports();
     _loadMyReports();
     _loadMapReports();
+    _initFCM();
+  }
+
+  Future<void> _initFCM() async {
+    final messaging = FirebaseMessaging.instance;
+    final settings = await messaging.requestPermission();
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      final token = await messaging.getToken();
+      if (token != null) {
+        try {
+          await ApiService().updateFcmToken(token);
+        } catch (_) {}
+      }
+    }
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message.notification!.title ?? 'Notifikasi Baru'),
+            action: SnackBarAction(
+              label: 'Lihat',
+              onPressed: () {
+                if (message.data['report_id'] != null) {
+                  context.push('/report/${message.data['report_id']}');
+                }
+              },
+            ),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _loadUser() async {
@@ -219,13 +253,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      GlassContainer(
-                        blur: 20, opacity: 0.15, borderRadius: BorderRadius.circular(16), 
-                        padding: const EdgeInsets.all(10), border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                        child: GestureDetector(
-                           onTap: () => context.push('/notifications'),
-                           child: const Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
-                        ),
+                      Row(
+                        children: [
+                          GlassContainer(
+                            blur: 20, opacity: 0.15, borderRadius: BorderRadius.circular(16), 
+                            padding: const EdgeInsets.all(10), border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                            child: GestureDetector(
+                               onTap: () => context.push('/news'),
+                               child: const Icon(Icons.newspaper_rounded, color: Colors.white, size: 28),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GlassContainer(
+                            blur: 20, opacity: 0.15, borderRadius: BorderRadius.circular(16), 
+                            padding: const EdgeInsets.all(10), border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                            child: GestureDetector(
+                               onTap: () => context.push('/notifications'),
+                               child: const Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -446,12 +493,154 @@ class _HomeScreenState extends State<HomeScreen> {
                   radius: 40,
                 ),
               ),
+            if (_mapReports.isNotEmpty)
+              MarkerLayer(
+                markers: _mapReports.map((r) {
+                  final lat = double.tryParse(r['latitude'].toString()) ?? 0.0;
+                  final lng = double.tryParse(r['longitude'].toString()) ?? 0.0;
+                  final damage = r['damage_level']?.toString().toLowerCase().trim() ?? 'ringan';
+                  
+                  Color color = Colors.green;
+                  if (damage == 'sedang') color = Colors.yellow;
+                  if (damage == 'berat') color = Colors.red;
+
+                  return Marker(
+                    point: LatLng(lat, lng),
+                    width: 24,
+                    height: 24,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedReport = r;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 8, spreadRadius: 2),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
           ],
         ),
         
         // Floating Bottom Map Detail Sheet
-        Positioned(
-          bottom: 150,
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          bottom: _selectedReport != null ? 100 : -300,
+          left: 24,
+          right: 24,
+          child: _selectedReport != null ? GestureDetector(
+            onTap: () => context.push('/report/${_selectedReport!['id']}'),
+            child: GlassContainer(
+              borderRadius: BorderRadius.circular(24),
+              padding: const EdgeInsets.all(16),
+              color: Colors.white,
+              opacity: 0.95,
+              child: Stack(
+                children: [
+                  Row(
+                    children: [
+                      if (_selectedReport!['photos'] != null && (_selectedReport!['photos'] as List).isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: CachedNetworkImage(
+                            imageUrl: _selectedReport!['photos'][0]['url'],
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(width: 80, height: 80, color: Colors.grey[200]),
+                            errorWidget: (_, __, ___) => _damageIconBox(_selectedReport!),
+                          ),
+                        )
+                      else
+                        _damageIconBox(_selectedReport!),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _selectedReport!['address'] ?? 'Lokasi tidak diketahui',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.neutral900),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.getStatusColor(_selectedReport!['status'] ?? '').withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    AppTheme.getStatusLabel(_selectedReport!['status'] ?? ''),
+                                    style: TextStyle(fontSize: 10, color: AppTheme.getStatusColor(_selectedReport!['status'] ?? ''), fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.getDamageColor(_selectedReport!['damage_level'] ?? '').withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    _selectedReport!['damage_level'] ?? '',
+                                    style: TextStyle(fontSize: 10, color: AppTheme.getDamageColor(_selectedReport!['damage_level'] ?? ''), fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            if (_selectedReport!['description'] != null)
+                              Text(
+                                _selectedReport!['description'],
+                                style: const TextStyle(color: AppTheme.neutral500, fontSize: 12),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedReport = null;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(color: Colors.grey[200], shape: BoxShape.circle),
+                        child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ) : const SizedBox(),
+        ),
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          bottom: _selectedReport == null ? 120 : -100,
           left: 24,
           right: 24,
           child: GlassContainer(

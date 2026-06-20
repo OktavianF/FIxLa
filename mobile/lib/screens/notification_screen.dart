@@ -25,7 +25,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final api = ApiService();
       final res = await api.getNotifications();
       setState(() {
-        _notifications = res.data['data']['data'] ?? [];
+        _notifications = res.data['data'] ?? [];
         _loading = false;
       });
     } catch (e) {

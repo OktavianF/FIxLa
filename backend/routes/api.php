@@ -12,6 +12,9 @@ Route::prefix('v1')->group(function () {
   Route::post('/register', [AuthController::class , 'register']);
   Route::post('/login', [AuthController::class , 'login']);
 
+  // News
+  Route::get('/news', [\App\Http\Controllers\Api\NewsController::class, 'index']);
+
   // Public report viewing
   Route::get('/reports', [ReportController::class , 'index']);
   Route::get('/reports/map', [ReportController::class , 'mapReports']);
@@ -28,9 +31,11 @@ Route::prefix('v1')->group(function () {
 // Authenticated routes
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
   // Auth
+  Route::get('/user', [AuthController::class, 'user']);
   Route::post('/logout', [AuthController::class , 'logout']);
   Route::get('/me', [AuthController::class , 'me']);
   Route::post('/profile', [AuthController::class , 'updateProfile']);
+  Route::post('/fcm-token', [AuthController::class, 'updateFcmToken']);
 
   // Reports
   Route::post('/reports', [ReportController::class , 'store']);

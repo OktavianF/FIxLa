@@ -93,7 +93,10 @@ class DashboardController extends Controller
      */
     public function heatmapData(): JsonResponse
     {
-        $data = Report::select('latitude', 'longitude', 'priority_score', 'damage_level')
+        $data = Report::select('id', 'latitude', 'longitude', 'priority_score', 'damage_level', 'address', 'description', 'status', 'created_at')
+            ->with(['photos' => function ($query) {
+                $query->where('is_primary', true)->limit(1);
+            }])
             ->where('status', '!=', 'completed')
             ->get();
 

@@ -2,7 +2,7 @@
  * FixLA Auth Helper
  * Mengelola autentikasi user di Landing Page via localStorage + Backend API
  */
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = 'http://fixla-alb-486742336.ap-southeast-1.elb.amazonaws.com/api/v1';
 
 const Auth = {
     getToken()   { return localStorage.getItem('fixla_token'); },

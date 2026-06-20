@@ -7,11 +7,12 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RepairController;
 
-// FRONTEND (Landing Page)
+// FRONTEND
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/fitur', [PageController::class, 'fitur'])->name('fitur');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::get('/news', [PageController::class, 'news'])->name('news');
 Route::get('/login', [PageController::class, 'login'])->name('login');
 Route::get('/register', [PageController::class, 'register'])->name('register');
 Route::get('/lapor', [PageController::class, 'lapor'])->name('lapor');

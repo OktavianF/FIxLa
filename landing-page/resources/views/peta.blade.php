@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Fetch reports from API
     try {
-        const res = await fetch('http://localhost:8000/api/v1/reports/map');
+        const res = await fetch('http://fixla-alb-486742336.ap-southeast-1.elb.amazonaws.com/api/v1/reports/map');
         const json = await res.json();
         const reports = json.data || json || [];
 
@@ -118,15 +118,24 @@ document.addEventListener('DOMContentLoaded', async function() {
                 radius: 6, fillColor: color, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9
             }).addTo(map);
 
-            const photoUrl = r.photo ? `http://localhost:8000/storage/${r.photo}` : '';
+            const photoUrl = (r.photos && r.photos.length > 0) ? r.photos[0].url : (r.photo ? `http://fixla-alb-486742336.ap-southeast-1.elb.amazonaws.com/api/v1/images/${r.photo}` : '');
+            
+            let statusColor = '#3b82f6'; // default blue
+            if (r.status === 'in_progress') statusColor = '#eab308';
+            else if (r.status === 'completed') statusColor = '#22c55e';
+            
             marker.bindPopup(`
-                <div style="min-width:200px">
-                    ${photoUrl ? `<img src="${photoUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px" onerror="this.style.display='none'">` : ''}
-                    <div style="font-weight:700;font-size:14px;margin-bottom:4px">${r.description || 'Kerusakan Jalan'}</div>
-                    <div style="font-size:12px;color:#64748b">${r.address || 'Lokasi tidak diketahui'}</div>
-                    <div style="margin-top:6px;display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;color:#fff;background:${color}">
-                        ${r.damage_level || 'N/A'}
+                <div class="popup-card" style="min-width:220px; font-family: 'Inter', sans-serif;">
+                    ${photoUrl ? `<img src="${photoUrl}" style="width:100%;height:140px;object-fit:cover;border-radius:12px;margin-bottom:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);" onerror="this.style.display='none'">` : '<div style="width:100%;height:100px;background:#f1f5f9;border-radius:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;color:#94a3b8"><i class="fas fa-image text-3xl"></i></div>'}
+                    <div style="font-weight:800;font-size:15px;color:#0f172a;margin-bottom:4px;line-height:1.3">${r.address || 'Lokasi tidak diketahui'}</div>
+                    <div style="display:flex; gap:6px; margin-bottom:8px;">
+                        <span style="padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;color:${color};background:${color}20;text-transform:uppercase;">${r.damage_level || 'N/A'}</span>
+                        <span style="padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;color:${statusColor};background:${statusColor}20;text-transform:uppercase;">${r.status || 'pending'}</span>
                     </div>
+                    <div style="font-size:13px;color:#64748b;margin-bottom:12px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.description || 'Tidak ada deskripsi'}</div>
+                    <a href="/peta?detail=${r.id}" onclick="alert('Silakan login di aplikasi mobile atau dashboard admin untuk melihat detail laporan penuh.'); return false;" style="display:block;width:100%;text-align:center;padding:8px 0;background:#eff6ff;color:#2563eb;font-weight:700;font-size:13px;border-radius:8px;text-decoration:none;transition:all 0.2s;">
+                        Lihat Detail <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
                 </div>
             `);
         });

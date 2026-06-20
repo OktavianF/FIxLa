@@ -56,8 +56,10 @@ class ReportController extends Controller
     {
         $query = Report::select([
             'id', 'latitude', 'longitude', 'damage_level',
-            'status', 'priority_score', 'address', 'created_at',
-        ]);
+            'status', 'priority_score', 'address', 'description', 'created_at',
+        ])->with(['photos' => function ($query) {
+            $query->where('is_primary', true)->limit(1);
+        }]);
 
         if ($request->filled('bounds')) {
             $bounds = $request->bounds;
@@ -184,12 +186,13 @@ class ReportController extends Controller
             'notes'       => $validated['notes'] ?? null,
         ]);
 
-        $this->notifyReportOwner($report, $validated['status']);
+        $fcmDebug = $this->notifyReportOwner($report, $validated['status']);
 
         return response()->json([
             'success' => true,
             'message' => 'Status laporan diperbarui',
             'data'    => new ReportResource($report->fresh(['photos', 'statusHistories'])),
+            'fcm_debug' => $fcmDebug,
         ]);
     }
 
@@ -233,8 +236,11 @@ class ReportController extends Controller
     /**
      * Send a notification to the report owner when the status changes.
      */
-    private function notifyReportOwner(Report $report, string $status): void
+    private function notifyReportOwner(Report $report, string $status): string
     {
+        $debug = [];
+        $debug[] = "notifyReportOwner called for report {$report->id} with status {$status}";
+        
         $labels = [
             'verified'     => 'Laporan telah diverifikasi',
             'scheduled'    => 'Perbaikan telah dijadwalkan',
@@ -243,7 +249,8 @@ class ReportController extends Controller
         ];
 
         if (! isset($labels[$status])) {
-            return;
+            $debug[] = "No label defined for status: {$status}";
+            return implode(" | ", $debug);
         }
 
         AppNotification::create([
@@ -253,6 +260,67 @@ class ReportController extends Controller
             'message'   => "Status laporan #{$report->id} di {$report->address} telah diperbarui.",
             'type'      => 'status_update',
         ]);
+
+        $user = $report->user;
+        if (! $user) {
+            $debug[] = "Report user is missing";
+            return implode(" | ", $debug);
+        }
+        
+        if (! $user->fcm_token) {
+            $debug[] = "User {$user->id} has no fcm_token";
+            return implode(" | ", $debug);
+        }
+        
+        $debug[] = "User {$user->id} FCM token: {$user->fcm_token}";
+
+        try {
+            $serviceAccountPath = storage_path('app/firebase-service-account.json');
+            if (! file_exists($serviceAccountPath)) {
+                $debug[] = "FCM Service Account not found at: {$serviceAccountPath}";
+                return implode(" | ", $debug);
+            }
+
+            $debug[] = "Service account found, authenticating...";
+            $client = new \Google\Client();
+            $client->setAuthConfig($serviceAccountPath);
+            $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
+            $token = $client->fetchAccessTokenWithAssertion();
+
+            if (! isset($token['access_token'])) {
+                $debug[] = "Failed to fetch FCM access token: " . json_encode($token);
+                return implode(" | ", $debug);
+            }
+            
+            $debug[] = "FCM Access token fetched successfully";
+
+            $credentials = json_decode(file_get_contents($serviceAccountPath), true);
+            $projectId   = $credentials['project_id'];
+
+            $message = [
+                'message' => [
+                    'token'        => $user->fcm_token,
+                    'notification' => [
+                        'title' => $labels[$status],
+                        'body'  => "Status laporan #{$report->id} di {$report->address} telah diperbarui.",
+                    ],
+                    'data' => [
+                        'report_id' => (string) $report->id,
+                        'type'      => 'status_update',
+                    ],
+                ],
+            ];
+
+            $debug[] = "Sending FCM payload: " . json_encode($message);
+            $response = \Illuminate\Support\Facades\Http::withToken($token['access_token'])
+                ->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", $message);
+                
+            $debug[] = "FCM API Response: {$response->status()} - {$response->body()}";
+        } catch (\Exception $e) {
+            $debug[] = "FCM Error: " . $e->getMessage();
+        }
+        
+        return implode(" | ", $debug);
     }
 
     /**

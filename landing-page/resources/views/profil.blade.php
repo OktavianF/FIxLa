@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initialEl.textContent = (user.name?.[0] || 'U').toUpperCase();
 
         if (user.avatar) {
-            const avatarUrl = `http://localhost:8000/storage/${user.avatar}`;
+            const avatarUrl = `http://fixla-alb-486742336.ap-southeast-1.elb.amazonaws.com/api/v1/images/${user.avatar}`;
             avatarImg.src = avatarUrl;
             avatarImg.classList.remove('hidden');
             initialEl.classList.add('hidden');

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "683729012338",
+    "project_id": "fixla-f0ba6",
+    "storage_bucket": "fixla-f0ba6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:683729012338:android:8a3b217449cf600588a4eb",
+        "android_client_info": {
+          "package_name": "com.fixla.fixla_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCs0abnstWTqRy4vY2Ew5V8k074atAIk-4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

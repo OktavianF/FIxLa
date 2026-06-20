@@ -68,6 +68,8 @@ class ApiService {
   Future<Response> getMapReports({Map<String, dynamic>? bounds}) =>
       _dio.get('/reports/map', queryParameters: bounds != null ? {'bounds': bounds} : null);
 
+  Future<Response> getNews() => _dio.get('/news');
+
   Future<Response> getReport(int id) => _dio.get('/reports/$id');
 
   Future<Response> createReport(FormData formData) =>
@@ -91,4 +93,7 @@ class ApiService {
       _dio.patch('/notifications/$id/read');
 
   Future<Response> markAllAsRead() => _dio.patch('/notifications/read-all');
+
+  Future<Response> updateFcmToken(String token) =>
+      _dio.post('/fcm-token', data: {'fcm_token': token});
 }

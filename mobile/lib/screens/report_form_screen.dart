@@ -406,7 +406,7 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text('Bisa upload hingga 5 foto.', style: TextStyle(fontSize: 13, color: AppTheme.neutral700)),
+          const Text('Tambahkan foto bukti jalan rusak.', style: TextStyle(fontSize: 13, color: AppTheme.neutral700)),
         ],
       ),
     );

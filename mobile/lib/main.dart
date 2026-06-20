@@ -12,9 +12,22 @@ import 'screens/report_detail_screen.dart';
 import 'screens/my_reports_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/notification_screen.dart';
+import 'screens/news_screen.dart';
 import 'screens/faq_screen.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   runApp(const ProviderScope(child: FixLAApp()));
 }
 
@@ -25,6 +38,7 @@ final _router = GoRouter(
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
     GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+    GoRoute(path: '/news', builder: (_, __) => const NewsScreen()),
     GoRoute(path: '/report/create', builder: (_, __) => const ReportFormScreen()),
     GoRoute(
       path: '/report/:id',

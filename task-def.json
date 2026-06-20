@@ -1,0 +1,144 @@
+{
+    "taskDefinition": {
+        "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:890105072685:task-definition/fixla-backend:2",
+        "containerDefinitions": [
+            {
+                "name": "fixla-backend",
+                "image": "890105072685.dkr.ecr.ap-southeast-1.amazonaws.com/fixla-backend:latest",
+                "cpu": 0,
+                "portMappings": [
+                    {
+                        "containerPort": 80,
+                        "hostPort": 80,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "environment": [
+                    {
+                        "name": "FILESYSTEM_DISK",
+                        "value": "s3"
+                    },
+                    {
+                        "name": "APP_ENV",
+                        "value": "production"
+                    },
+                    {
+                        "name": "DB_PORT",
+                        "value": "5432"
+                    },
+                    {
+                        "name": "APP_NAME",
+                        "value": "FixLA"
+                    },
+                    {
+                        "name": "AWS_DEFAULT_REGION",
+                        "value": "ap-southeast-1"
+                    },
+                    {
+                        "name": "AWS_BUCKET",
+                        "value": "fixla-uploads-890105072685"
+                    },
+                    {
+                        "name": "APP_KEY",
+                        "value": "base64:mIS+DYoz/ErR7cKJ1RPJulvOwq0r3PFPkQ8C45Td+y8="
+                    },
+                    {
+                        "name": "DB_HOST",
+                        "value": "fixla-db.cx4wuoko8miw.ap-southeast-1.rds.amazonaws.com"
+                    },
+                    {
+                        "name": "DB_USERNAME",
+                        "value": "fixla_admin"
+                    },
+                    {
+                        "name": "DB_CONNECTION",
+                        "value": "pgsql"
+                    },
+                    {
+                        "name": "LOG_CHANNEL",
+                        "value": "stderr"
+                    },
+                    {
+                        "name": "APP_URL",
+                        "value": "http://fixla-alb-486742336.ap-southeast-1.elb.amazonaws.com"
+                    },
+                    {
+                        "name": "APP_DEBUG",
+                        "value": "false"
+                    },
+                    {
+                        "name": "DB_DATABASE",
+                        "value": "fixla"
+                    },
+                    {
+                        "name": "DB_PASSWORD",
+                        "value": "GantiPasswordKuatIni123!"
+                    }
+                ],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/fixla-backend",
+                        "awslogs-create-group": "true",
+                        "awslogs-region": "ap-southeast-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                },
+                "systemControls": []
+            }
+        ],
+        "family": "fixla-backend",
+        "taskRoleArn": "arn:aws:iam::890105072685:role/fixla-ecs-task-role",
+        "executionRoleArn": "arn:aws:iam::890105072685:role/fixla-ecs-execution-role",
+        "networkMode": "awsvpc",
+        "revision": 2,
+        "volumes": [],
+        "status": "ACTIVE",
+        "requiresAttributes": [
+            {
+                "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+            },
+            {
+                "name": "ecs.capability.execution-role-awslogs"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.ecr-auth"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.task-iam-role"
+            },
+            {
+                "name": "ecs.capability.execution-role-ecr-pull"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+            },
+            {
+                "name": "ecs.capability.task-eni"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+            }
+        ],
+        "placementConstraints": [],
+        "compatibilities": [
+            "EC2",
+            "MANAGED_INSTANCES",
+            "FARGATE"
+        ],
+        "requiresCompatibilities": [
+            "FARGATE"
+        ],
+        "cpu": "512",
+        "memory": "1024",
+        "registeredAt": "2026-06-02T20:49:11.197000+07:00",
+        "registeredBy": "arn:aws:iam::890105072685:root"
+    },
+    "tags": []
+}

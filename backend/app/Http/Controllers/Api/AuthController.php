@@ -131,4 +131,25 @@ class AuthController extends Controller
             'data'    => new UserResource($user),
         ]);
     }
+
+    public function updateFcmToken(Request $request): JsonResponse
+    {
+        $request->validate([
+            'fcm_token' => ['nullable', 'string'],
+        ]);
+
+        $user = $request->user();
+        $token = $request->input('fcm_token');
+        
+        \Illuminate\Support\Facades\Log::debug("Updating FCM token for user {$user->id}. New Token: {$token}");
+
+        $user->update([
+            'fcm_token' => $token,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'FCM token updated',
+        ]);
+    }
 }

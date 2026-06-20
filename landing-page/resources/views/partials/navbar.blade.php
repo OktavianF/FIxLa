@@ -19,6 +19,7 @@
                         ['url' => '/fitur', 'label' => 'FITUR'],
                         ['url' => '/about', 'label' => 'TENTANG'],
                         ['url' => '/contact', 'label' => 'KONTAK'],
+                        ['url' => '/news', 'label' => 'BERITA'],
                     ];
                 @endphp
 
